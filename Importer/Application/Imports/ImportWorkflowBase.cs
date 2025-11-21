@@ -1,10 +1,13 @@
 ﻿using Application.Contracts.Imports;
+using CsvHelper;
+using CsvHelper.Configuration;
 using Domain.Imports;
 using Domain.Shared;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Application.Imports
@@ -71,10 +74,23 @@ namespace Application.Imports
         /// <summary>
         /// Override to parse CSV, JSON, Excel, etc.
         /// </summary>
-        protected virtual async Task<List<TImport>> ParseAsync(Stream file)
+        protected virtual async Task<List<TImport>> ParseAsync(Stream stream)
         {
-            file.Position = 0;
-            return await JsonSerializer.DeserializeAsync<List<TImport>>(file) ?? [];
+            using var reader = new StreamReader(stream);
+
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true,
+                IgnoreBlankLines = true,
+                TrimOptions = TrimOptions.Trim,
+            };
+
+            using var csv = new CsvReader(reader, config);
+
+            var records = csv.GetRecords<TImport>().ToList();
+
+            return records;
+
         }
 
         /// <summary>

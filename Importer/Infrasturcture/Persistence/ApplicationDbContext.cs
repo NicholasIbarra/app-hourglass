@@ -9,7 +9,6 @@ namespace Infrasturcture.Persistence
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
-            var db = new ApplicationDbContext(options);
         }
 
         public DbSet<ImportRecord> ImportRecords => Set<ImportRecord>();
