@@ -16,21 +16,24 @@ namespace Infrasturcture.Storage
             Directory.CreateDirectory(_rootPath);
         }
 
-        public async Task SaveAsync(
+        public async Task<string> SaveAsync(
             string container,
-            string fileName,
             Stream content,
             CancellationToken cancellationToken = default)
         {
             var containerPath = Path.Combine(_rootPath, container);
             Directory.CreateDirectory(containerPath);
 
+            var fileName = Guid.NewGuid().ToString();
             var filePath = Path.Combine(containerPath, fileName);
 
             _logger?.LogDebug("Saving file {FilePath}", filePath);
 
             await using var fileStream = File.Create(filePath);
             await content.CopyToAsync(fileStream, cancellationToken);
+
+            // return full path with file
+            return filePath;
         }
 
         public async Task<Stream?> GetAsync(

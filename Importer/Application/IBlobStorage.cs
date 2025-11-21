@@ -8,7 +8,7 @@ namespace Application
 {
     public interface IBlobStorage
     {
-        Task SaveAsync(string container, string fileName, Stream content, CancellationToken cancellationToken = default);
+        Task<string> SaveAsync(string container, Stream content, CancellationToken cancellationToken = default);
         Task<Stream?> GetAsync(string container, string fileName, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(string container, string fileName, CancellationToken cancellationToken = default);
     }

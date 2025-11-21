@@ -1,13 +1,15 @@
-﻿using Domain.Imports;
+﻿using Application;
+using Domain.Imports;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrasturcture.Persistence
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
+            var db = new ApplicationDbContext(options);
         }
 
         public DbSet<ImportRecord> ImportRecords => Set<ImportRecord>();

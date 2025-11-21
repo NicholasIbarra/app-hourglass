@@ -62,7 +62,8 @@ namespace Infrasturcture
         public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
         {
             services
-            .AddScoped<DbContext, ApplicationDbContext>();
+                .AddScoped<DbContext, ApplicationDbContext>()
+                .AddScoped<IApplicationDbContext, ApplicationDbContext>();
 
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"))

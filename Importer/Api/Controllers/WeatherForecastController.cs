@@ -1,13 +1,17 @@
 using Application;
+using Application.Contracts.Imports;
+using Application.Imports;
+using Domain.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
+using System.Text.Json;
 
 namespace Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize]
+    //[Authorize]
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -16,12 +20,14 @@ namespace Api.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
-        private readonly IBlobStorage _blob;
+        private readonly IImportWorkflowBase<ImportOfficeMappingDto> _importWorkflow;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, IBlobStorage blob)
+        public WeatherForecastController(
+            ILogger<WeatherForecastController> logger, 
+            IImportWorkflowBase<ImportOfficeMappingDto> importWorkflow)
         {
             _logger = logger;
-            _blob = blob;
+            _importWorkflow = importWorkflow;
         }
 
         [HttpGet(Name = "GetWeatherForecast")]
@@ -38,9 +44,38 @@ namespace Api.Controllers
             var json = System.Text.Json.JsonSerializer.Serialize(response);
             var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
-            _blob.SaveAsync("weatherforecast", "data.json", stream).GetAwaiter().GetResult();
-
             return response;
+        }
+
+        [HttpPost("import")]
+        public async Task<IActionResult> Import([FromBody] IFormFile importDto)
+        {
+            var result = await _importWorkflow.Import(importDto);
+            if (result.Success)
+            {
+                return Ok(new { Message = "Import started successfully." });
+            }
+            else
+            {
+                return BadRequest(new { Message = "Import failed to start.", Error = result.Error });
+            }
+        }
+
+        [HttpGet("template")]
+        public IActionResult GetImportTemplate(ImportType type)
+        {
+            var templateStream = type switch
+            {
+                ImportType.EpicCostCenter => new ImportOfficeMappingDto(),
+                _ => throw new ArgumentOutOfRangeException(nameof(type), "Unsupported import type")
+            };
+
+            // to json
+            var content = JsonSerializer.Serialize(templateStream, new JsonSerializerOptions { WriteIndented = true });
+            var byteArray = Encoding.UTF8.GetBytes(content);
+            var stream = new MemoryStream(byteArray);
+
+            return File(stream, "text/csv", $"{type}_ImportTemplate.csv");
         }
     }
 }

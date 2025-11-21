@@ -1,5 +1,7 @@
 using Microsoft.OpenApi.Models;
 using Infrasturcture;
+using Application.Contracts.Imports;
+using Application.Imports;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +37,8 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+builder.Services.AddScoped<IImportWorkflowBase<ImportOfficeMappingDto>, ImportOfficeMapping>();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
