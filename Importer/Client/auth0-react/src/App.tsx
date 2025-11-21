@@ -3,6 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 
 function App() {
   const [count, setCount] = useState(0)
@@ -35,6 +36,23 @@ function App() {
   if (!isAuthenticated) {
     return null
   }
+
+  const connection = new HubConnectionBuilder()
+        .withUrl("https://localhost:7087/hubs/imports")
+        .withAutomaticReconnect()
+        .configureLogging(LogLevel.Information)
+        .build();
+  
+      connection.start().then(() => {
+  
+        connection.on("ImportProgress", msg => {
+          console.log("Import progress", msg);  
+        });
+  
+        connection.on("ImportCompleted", msg => {
+          console.log("Import completed", msg);
+        });
+      });
 
   return (
     <>

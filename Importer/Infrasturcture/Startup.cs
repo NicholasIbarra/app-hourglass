@@ -1,11 +1,9 @@
 ﻿using Application;
 using Hangfire;
-using Infrasturcture.Hubs;
 using Infrasturcture.Persistence;
 using Infrasturcture.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +21,18 @@ namespace Infrasturcture
 
             services.AddPersistence(configuration);
             services.AddSignalR();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowClient", builder =>
+                {
+                    builder.WithOrigins("http://localhost:5173")
+                           .AllowAnyHeader()
+                           .AllowAnyMethod()
+                           .AllowCredentials(); // REQUIRED for SignalR
+                });
+            });
+
 
             services.AddSingleton<IBlobStorage>(sp =>
             {
@@ -78,10 +88,11 @@ namespace Infrasturcture
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseCors("AllowClient");
 
             app.UseHangfireDashboard();
 
-            app.MapHub<ImportProgressHub>("/import-progress");
+            app.MapHub<ImportsHub>("/hubs/imports");
 
 
             return app;

@@ -12,4 +12,5 @@ namespace Application
         Task<Stream?> GetAsync(string container, string fileName, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(string container, string fileName, CancellationToken cancellationToken = default);
     }
+
 }

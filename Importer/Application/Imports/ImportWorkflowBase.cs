@@ -5,6 +5,7 @@ using Domain.Imports;
 using Domain.Shared;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
@@ -18,8 +19,9 @@ namespace Application.Imports
             ILogger<ImportOfficeMapping> logger,
             IBlobStorage blobStorage,
             IBackgroundJobClient backgroundJobClient,
-            IApplicationDbContext dbContext)
-            : base(logger, blobStorage, backgroundJobClient, dbContext)
+            IApplicationDbContext dbContext,
+            IHubContext<ImportsHub> hubContext)
+            : base(logger, blobStorage, backgroundJobClient, dbContext, hubContext)
         {
         }
         public override ImportType ImportType => ImportType.EpicCostCenter;
@@ -55,17 +57,21 @@ namespace Application.Imports
         private readonly IBlobStorage _blobStorage;
         private readonly IBackgroundJobClient _jobs;
         private readonly IApplicationDbContext _db;
+        private readonly IHubContext<ImportsHub> _hub;
+
 
         protected ImportWorkflowBase(
             ILogger<ImportWorkflowBase<TImport>> logger,
             IBlobStorage blobStorage,
             IBackgroundJobClient jobs,
-            IApplicationDbContext db)
+            IApplicationDbContext db,
+            IHubContext<ImportsHub> hub)
         {
             _logger = logger;
             _blobStorage = blobStorage;
             _jobs = jobs;
             _db = db;
+            _hub = hub;
         }
 
         public const string BlobContainer = "import";
@@ -217,6 +223,13 @@ namespace Application.Imports
                     else
                     {
                         import.UpdateProgress(import.ProcessedRecords + 1);
+                        await _hub.Clients.All.SendAsync("ImportProgress", new
+                        {
+                            ImportId = import.Id,
+                            ProcessedRecords = import.ProcessedRecords,
+                            TotalRecords = import.TotalRecords,
+                            Status = import.Status.ToString()
+                        });
 
                         // publish websocket event, etc.
                     }
