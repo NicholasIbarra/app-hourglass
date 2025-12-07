@@ -104,8 +104,7 @@ namespace Application.Imports
         /// </summary>
         /// <param name="items"></param>
         /// <returns></returns>
-        protected virtual Task<object?> BuildPreProcessingContextAsync(
-            IReadOnlyList<TImport> items)
+        protected virtual Task<object?> BuildPreProcessingContextAsync(IReadOnlyList<TImport> items)
             => Task.FromResult<object?>(null);
 
 
