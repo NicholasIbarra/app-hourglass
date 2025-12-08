@@ -6,6 +6,7 @@ var sql = builder.AddSqlServer("sql")
     .AddDatabase("TestDb");
 
 builder.AddProject<Projects.Api>("api")
+    .WithHttpsEndpoint(5050, name: "api")
     .WithReference(sql)
     .WaitFor(sql);
 
