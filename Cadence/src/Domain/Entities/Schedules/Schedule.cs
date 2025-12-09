@@ -19,7 +19,7 @@ public class Schedule : BaseEntity, IAggregateRoot
 
     public string? TimeZone { get; internal set; }
 
-    public bool IsAllDayEvent { get; internal set; }
+    public bool IsAllDay { get; internal set; }
 
     public RecurrencePattern RecurrencePattern { get; internal set; } = null!;
 
@@ -51,7 +51,7 @@ public class Schedule : BaseEntity, IAggregateRoot
             Description = description,
             StartDate = startEndDate.StartDate,
             EndDate = startEndDate.EndDate,
-            IsAllDayEvent = isAllDay,
+            IsAllDay = isAllDay,
             TimeZone = timeZone,
             RecurrenceEndDate = endRecurrenceDate,
 
