@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Scheduler.Application;
 using Scheduler.Infrastructure.Persistence;
 using Shared.EntityFramework;
-using Wolverine;
+using MediatR;
 
 namespace Scheduler.Infrastructure;
 
@@ -18,19 +18,9 @@ public static class Startup
             .AddScoped<ISchdulerDbContext, SchedulerDbContext>()
             .AddEntityFramework<SchedulerDbContext>(builder.Configuration.GetConnectionString("TestDb")!);
 
-        return builder;
-    }
-}
+        // Register MediatR handlers from Application assembly
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SchedulerApplication).Assembly));
 
-public static class WolverineStartup
-{
-    public static IHostApplicationBuilder AddWolverineBus(this IHostApplicationBuilder builder)
-    {
-        builder.Services.AddWolverine(opts =>
-        {
-            opts.Discovery.IncludeAssembly(typeof(SchedulerApplication).Assembly);
-            opts.Policies.AutoApplyTransactions();
-        });
         return builder;
     }
 }

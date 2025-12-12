@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Wolverine;
+using MediatR;
+using Scheduler.Application.Calendars;
 
 namespace Cadence.Api.Controllers;
 
@@ -7,19 +8,18 @@ namespace Cadence.Api.Controllers;
 [Route("api/calendars")]
 public class CalendarsController : ControllerBase
 {
-    private readonly IMessageBus _bus;
+    private readonly IMediator _mediator;
 
-    public CalendarsController(IMessageBus bus)
+    public CalendarsController(IMediator mediator)
     {
-        _bus = bus;
+        _mediator = mediator;
     }
 
     [HttpGet]
-    public async Task<IReadOnlyList<Scheduler.Application.Calendars.CalendarDto>> List()
+    public async Task<IReadOnlyList<CalendarDto>> List()
     {
-        //var response = await _bus.InvokeAsync<IReadOnlyList<Scheduler.Application.Calendars.CalendarDto>>(new ListCalendars());
-        //return response;
-        throw new NotImplementedException();
+        var response = await _mediator.Send(new GetAllCalendarsQuery());
+        return response;
     }
 
     //[HttpGet("{id}")]

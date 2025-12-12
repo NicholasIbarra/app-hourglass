@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" />
 	<PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="MediatR" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,6 +21,5 @@
     <Folder Include="Calendars\Contracts\" />
     <Folder Include="Calendars\Queries\" />
   </ItemGroup>
-
 
 </Project>
