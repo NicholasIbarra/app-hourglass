@@ -16,11 +16,13 @@
 
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="WolverineFx" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Application\Scheduler.Application.csproj" />
     <ProjectReference Include="..\IntegrationSolution.ServiceDefaults\ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Shared.EntityFramework\Shared.EntityFramework.csproj" />
   </ItemGroup>
 
 </Project>
