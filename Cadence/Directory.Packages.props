@@ -2,6 +2,8 @@
   <ItemGroup>
     <!-- Central package versions; keep versions only here -->
     <!-- Add shared versions as discovered -->
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Abstractions" Version="10.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />

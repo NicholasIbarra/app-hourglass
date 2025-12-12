@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using ServiceDefaults.Mediator;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -23,6 +24,7 @@ public static class Extensions
         builder.AddSwagger();
 
         builder.Services.AddServiceDiscovery();
+        builder.Services.AddMediatrBehaviors();
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
             http.AddStandardResilienceHandler();

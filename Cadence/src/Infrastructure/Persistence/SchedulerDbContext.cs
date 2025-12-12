@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace Scheduler.Infrastructure.Persistence;
 
-public class SchedulerDbContext(DbContextOptions<SchedulerDbContext> options) : DbContext(options), ISchdulerDbContext
+public class SchedulerDbContext(DbContextOptions<SchedulerDbContext> options) : DbContext(options), ISchedulerDbContext
 {
     public DbSet<Calendar> Calendars => Set<Calendar>();
 

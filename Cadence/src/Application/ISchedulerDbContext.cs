@@ -3,7 +3,7 @@ using Scheduler.Domain.Entities.Calendars;
 
 namespace Scheduler.Application;
 
-public interface ISchdulerDbContext
+public interface ISchedulerDbContext
 {
     DbSet<Calendar> Calendars { get; }
 

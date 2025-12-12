@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+    using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using Scheduler.Application.Calendars;
 
@@ -16,9 +16,9 @@ public class CalendarsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IReadOnlyList<CalendarDto>> List()
+    public async Task<IReadOnlyList<CalendarDto>> List(int pageNumber)
     {
-        var response = await _mediator.Send(new GetAllCalendarsQuery());
+        var response = await _mediator.Send(new GetAllCalendarsQuery { PageNumber = pageNumber });
         return response;
     }
 
