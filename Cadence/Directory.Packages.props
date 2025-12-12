@@ -29,9 +29,6 @@
     <PackageVersion Include="Moq" Version="4.18.4" />
     <PackageVersion Include="Moq.AutoMock" Version="3.5.0" />
     <PackageVersion Include="MockQueryable.Moq" Version="7.0.3" />
-    <!-- Added MediatR central versions -->
-    <PackageVersion Include="MediatR" Version="12.2.0" />
-    <PackageVersion Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
-    <!-- Removed Wolverine central version as part of migration -->
+    <PackageVersion Include="MediatR" Version="14.0.0" />
   </ItemGroup>
 </Project>

@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Scheduler.Domain.Entities.Calendars;
 
-namespace Scheduler.Infrastructure.Persistence.Configuration;
+namespace Scheduler.Infrastructure.Persistence.Configurations;
 
 public class CalendarConfiguration : IEntityTypeConfiguration<Calendar>
 {
