@@ -1,7 +1,7 @@
 ﻿namespace SharedKernel.Queries.Pagination;
 
-public sealed record PagedResult<T>(
-    IReadOnlyList<T> Items,
+public sealed record PagedResponse<T>(
+    IEnumerable<T> Items,
     PaginationInfo Pagination
 );
 

@@ -7,7 +7,7 @@ using SharedKernel.Queries.Pagination;
 
 namespace Scheduler.Application.Calendars.Queries;
 
-public record GetAllCalendarsQuery : PaginationQuery, IRequest<IReadOnlyList<CalendarDto>>;
+public record GetAllCalendarsQuery : PaginationQuery, IRequest<PaginationQueryResponse<CalendarDto>>;
 
 public class GetAllCalendarsQueryValidator : AbstractValidator<GetAllCalendarsQuery>
 {
@@ -24,13 +24,15 @@ public class GetAllCalendarsQueryValidator : AbstractValidator<GetAllCalendarsQu
     }
 }
 
-public class GetAllCalendarsHandler(ISchedulerDbContext db) : IRequestHandler<GetAllCalendarsQuery, IReadOnlyList<CalendarDto>>
+public class GetAllCalendarsHandler(ISchedulerDbContext db) : IRequestHandler<GetAllCalendarsQuery, PaginationQueryResponse<CalendarDto>>
 {
-    public async Task<IReadOnlyList<CalendarDto>> Handle(GetAllCalendarsQuery request, CancellationToken cancellationToken)
+    public async Task<PaginationQueryResponse<CalendarDto>> Handle(GetAllCalendarsQuery request, CancellationToken cancellationToken)
     {
         var queryable = db.Calendars.AsNoTracking()
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize);
+
+        var total = await queryable.CountAsync(cancellationToken);
 
         queryable = request.SortBy?.ToLower() switch
         {
@@ -42,6 +44,8 @@ public class GetAllCalendarsHandler(ISchedulerDbContext db) : IRequestHandler<Ge
 
         var calendars = await queryable.ToListAsync(cancellationToken);
 
-        return calendars.Select(i => new CalendarDto(i.Id, i.Name, i.Color)).ToList();
+        var items = calendars.Select(i => new CalendarDto(i.Id, i.Name, i.Color)).ToList();
+
+        return new PaginationQueryResponse<CalendarDto>(items, total);
     }
 }
