@@ -4,6 +4,7 @@ using OneOf;
 using Scheduler.Application.Schedules.Commands;
 using Scheduler.Application.Schedules.Contracts;
 using SharedKernel.Exceptions;
+using Scheduler.Application.Schedules.Queries;
 
 namespace Cadence.Api.Controllers;
 
@@ -53,7 +54,12 @@ public class SchedulesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid id)
     {
-        // Placeholder until query exists
-        return NotFound();
+        var result = await _mediator.Send(new GetScheduleByIdQuery(id));
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(result);
     }
 }
