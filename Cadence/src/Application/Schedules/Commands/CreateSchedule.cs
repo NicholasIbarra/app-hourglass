@@ -1,32 +1,13 @@
 ﻿using FluentValidation;
 using MediatR;
+using OneOf;
+using Scheduler.Application.Schedules.Contracts;
 using Scheduler.Domain.Entities.Schedules;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using SharedKernel.Exceptions;
 
 namespace Scheduler.Application.Schedules.Commands;
 
-public record ScheduleDto
-{
-    public Guid Id { get; init; }
-    public Guid CalendarId { get; init; }
-    public string Name { get; init; } = "";
-    public string? Description { get; init; }
-    public DateTime StartDate { get; init; }
-    public DateTime EndDate { get; init; }
-    public bool IsAllDayEvent { get; init; }
-    public string TimeZone { get; init; } = "";
-    public RecurrenceFrequency RecurrenceFrequency { get; init; }
-    public int RecurrenceInterval { get; init; }
-    public DayOfTheWeek? RecurrenceDayOfWeek { get; init; }
-    public int? RecurrenceDayOfMonth { get; init; }
-    public int? RecurrenceMonth { get; init; }
-    public int? RecurrenceOccurrenceCount { get; init; }
-    public DateTime? RecurrenceEndDate { get; init; }
-}
-
-public class CreateScheduleCommand : IRequest<ScheduleDto>
+public class CreateScheduleCommand : IRequest<OneOf<ScheduleDto, ValidationFailed>>
 {
     public Guid CalendarId { get; set; }
     public string Name { get; set; } = "";
@@ -52,14 +33,104 @@ public class CreateScheduleCommandValidator : AbstractValidator<CreateScheduleCo
         RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required");
         RuleFor(x => x.StartDate).LessThan(x => x.EndDate).WithMessage("Start date must be before end date");
         RuleFor(x => x.TimeZone).NotEmpty().WithMessage("Time zone is required");
+
+        RuleFor(x => x.RecurrenceFrequency)
+            .NotNull().WithMessage("Recurrence frequency is required")
+            .IsInEnum().WithMessage("Valid recurrence frequency is required");
+
+        RuleFor(x => x.RecurrenceInterval)
+            .GreaterThan(0).WithMessage("Recurrence interval must be greater than 0")
+            .When(x => x.RecurrenceFrequency != RecurrenceFrequency.None);
+
+        RuleFor(x => x.RecurrenceDayOfWeek)
+            .Must((command, dayOfWeek) => command.RecurrenceFrequency != RecurrenceFrequency.Weekly || dayOfWeek.HasValue)
+            .WithMessage("Day of the week must be provided for weekly recurrence")
+            .When(x => x.RecurrenceFrequency != RecurrenceFrequency.None);
+
+        RuleFor(x => x.RecurrenceDayOfMonth)
+            .Must((command, dayOfMonth) => command.RecurrenceFrequency != RecurrenceFrequency.Monthly || dayOfMonth.HasValue)
+            .WithMessage("Day of the month must be provided for monthly recurrence")
+            .When(x => x.RecurrenceFrequency != RecurrenceFrequency.None);
+
+        RuleFor(x => x.RecurrenceMonth)
+            .Must((command, month) => command.RecurrenceFrequency != RecurrenceFrequency.Yearly || month.HasValue)
+            .WithMessage("Month must be provided for yearly recurrence")
+            .When(x => x.RecurrenceFrequency != RecurrenceFrequency.None);
+
+        RuleFor(x => x.RecurrenceOccurrenceCount)
+            .GreaterThan(0).When(x => x.RecurrenceOccurrenceCount.HasValue)
+            .WithMessage("Recurrence occurrence count must be greater than 0")
+            .When(x => x.RecurrenceFrequency != RecurrenceFrequency.None);
+
+        RuleFor(x => x.RecurrenceEndDate)
+            .GreaterThanOrEqualTo(x => x.StartDate)
+            .When(x => x.RecurrenceEndDate.HasValue)
+            .WithMessage("Recurrence end date cannot be before the event start date")
+            .When(x => x.RecurrenceFrequency != RecurrenceFrequency.None);
     }
 }
 
-public class CreateScheduleHandler (ISchedulerDbContext context): IRequestHandler<CreateScheduleCommand, ScheduleDto>
+public class CreateScheduleHandler(ISchedulerDbContext db, IValidator<CreateScheduleCommand> validator) : IRequestHandler<CreateScheduleCommand, OneOf<ScheduleDto, ValidationFailed>>
 {
-    public Task<ScheduleDto> Handle(CreateScheduleCommand request, CancellationToken cancellationToken)
+    public async Task<OneOf<ScheduleDto, ValidationFailed>> Handle(CreateScheduleCommand request, CancellationToken cancellationToken)
     {
-        // Implementation would go here
-        throw new NotImplementedException();
+        var validation = await validator.ValidateAsync(request, cancellationToken);
+        if (!validation.IsValid)
+        {
+            var message = string.Join("; ", validation.Errors.Select(e => e.ErrorMessage));
+            return new ValidationFailed(message);
+        }
+
+        var recurrence = new RecurrencePattern
+        {
+            Frequency = request.RecurrenceFrequency,
+            Interval = request.RecurrenceFrequency == RecurrenceFrequency.None ? 1 : request.RecurrenceInterval,
+            DayOfWeek = request.RecurrenceDayOfWeek,
+            DayOfMonth = request.RecurrenceDayOfMonth,
+            Month = request.RecurrenceMonth,
+            OccurrenceCount = request.RecurrenceOccurrenceCount
+        };
+
+        var startEnd = new ScheduleDate(request.StartDate, request.EndDate);
+
+        var created = Schedule.Create(
+            request.CalendarId,
+            request.Name,
+            request.Description,
+            startEnd,
+            request.IsAllDayEvent,
+            request.TimeZone,
+            recurrence,
+            request.RecurrenceEndDate);
+
+        if (created.IsT1)
+        {
+            return new ValidationFailed(created.AsT1.Message);
+        }
+
+        var entity = created.AsT0;
+        db.Schedules.Add(entity);
+        await db.SaveChangesAsync(cancellationToken);
+
+        var dto = new ScheduleDto
+        {
+            Id = entity.Id,
+            CalendarId = entity.CalendarId,
+            Name = entity.Title,
+            Description = entity.Description,
+            StartDate = entity.StartDate,
+            EndDate = entity.EndDate,
+            IsAllDayEvent = entity.IsAllDay,
+            TimeZone = entity.TimeZone ?? string.Empty,
+            RecurrenceFrequency = entity.RecurrencePattern.Frequency,
+            RecurrenceInterval = entity.RecurrencePattern.Interval,
+            RecurrenceDayOfWeek = entity.RecurrencePattern.DayOfWeek,
+            RecurrenceDayOfMonth = entity.RecurrencePattern.DayOfMonth,
+            RecurrenceMonth = entity.RecurrencePattern.Month,
+            RecurrenceOccurrenceCount = entity.RecurrencePattern.OccurrenceCount,
+            RecurrenceEndDate = entity.RecurrenceEndDate
+        };
+
+        return dto;
     }
 }
