@@ -8,6 +8,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using ServiceDefaults.Mediator;
+using ServiceDefaults.ExceptionHandling;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -25,6 +26,8 @@ public static class Extensions
 
         builder.Services.AddServiceDiscovery();
         builder.Services.AddMediatrBehaviors();
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
             http.AddStandardResilienceHandler();
@@ -87,6 +90,7 @@ public static class Extensions
 
     public static WebApplication UseServiceDefaults(this WebApplication app)
     {
+        app.UseExceptionHandler();
         app.MapDefaultEndpoints();
         app.MapControllers();
         app.UseHttpsRedirection();

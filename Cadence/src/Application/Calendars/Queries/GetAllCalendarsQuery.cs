@@ -11,18 +11,16 @@ public record GetAllCalendarsQuery : PaginationQuery, IRequest<IReadOnlyList<Cal
 
 public class GetAllCalendarsQueryValidator : AbstractValidator<GetAllCalendarsQuery>
 {
+    public string[] SortValues = ["Name"];
+
     public GetAllCalendarsQueryValidator(IValidator<PaginationQuery> paginationValidator)
     {
         Include(paginationValidator);
 
         RuleFor(x => x.SortBy)
-            .Must(sortBy => sortBy!.Equals("Name", StringComparison.OrdinalIgnoreCase))
+            .Must(sortBy => SortValues.Contains(sortBy!, StringComparer.OrdinalIgnoreCase))
             .When(x => !string.IsNullOrEmpty(x.SortBy))
-            .WithMessage("Sort by must be 'Name'.");
-
-        RuleFor(x => x.SortDirection)
-            .IsInEnum()
-            .WithMessage("Sort direction must be either 'Asc' or 'Desc'.");
+            .WithMessage($"Sort by must be one of the following values: {string.Join(", ", SortValues)}.");
     }
 }
 
@@ -34,7 +32,7 @@ public class GetAllCalendarsHandler(ISchedulerDbContext db) : IRequestHandler<Ge
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize);
 
-        queryable = request.SortBy.ToLower() switch
+        queryable = request.SortBy?.ToLower() switch
         {
             "name" => request.SortDirection == SortDirection.Asc
                 ? queryable.OrderBy(c => c.Name)
