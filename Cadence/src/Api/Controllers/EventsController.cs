@@ -2,6 +2,9 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Scheduler.Application.CalendarEvents.Queries;
 using Scheduler.Application.CalendarEvents.Contracts;
+using Scheduler.Application.CalendarEvents.Commands;
+using OneOf;
+using SharedKernel.Exceptions;
 
 namespace Cadence.Api.Controllers;
 
@@ -21,5 +24,27 @@ public class EventsController(IMediator mediator) : ControllerBase
 
         var results = await mediator.Send(new SearchEventsQuery(startDate, endDate, calendarIds));
         return Ok(results);
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(SearchEventDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Create([FromBody] CreateEventDto dto)
+    {
+        var result = await mediator.Send(new CreateEventCommand
+        {
+            CalendarId = dto.CalendarId,
+            Title = dto.Title,
+            Description = dto.Description,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate,
+            IsAllDay = dto.IsAllDay,
+            TimeZone = dto.TimeZone
+        });
+
+        return result.Match<IActionResult>(
+            success => CreatedAtAction(nameof(Get), new { startDate = success.StartDate, endDate = success.EndDate, calendarIds = new[] { success.CalendarId } }, success),
+            failed => BadRequest(failed.Message)
+        );
     }
 }

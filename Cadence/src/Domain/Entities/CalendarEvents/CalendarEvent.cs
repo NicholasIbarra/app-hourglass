@@ -32,7 +32,7 @@ public class CalendarEvent : BaseEntity, IAggregateRoot
         string? description,
         EventDate startEndDate,
         bool isAllDayEvent,
-        string timeZone,
+        string? timeZone,
         Guid? scheduleId)
     {
         if (string.IsNullOrWhiteSpace(title))
