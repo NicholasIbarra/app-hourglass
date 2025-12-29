@@ -1,6 +1,5 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using OneOf;
 using Scheduler.Application.Calendars.Commands;
 using Scheduler.Application.Calendars.Contracts;
 using Scheduler.Application.Calendars.Queries;
@@ -48,7 +47,7 @@ public class CalendarsController : ControllerBase
 
         return created.Match<IActionResult>(
             success => CreatedAtAction(nameof(GetById), new { id = success.Id }, success),
-            failed => Problem(failed.Message, statusCode: StatusCodes.Status400BadRequest)
+            failed => BadRequest(failed.Message)
         );
     }
 
@@ -76,7 +75,7 @@ public class CalendarsController : ControllerBase
 
         return updated.Match<IActionResult>(
             success => NoContent(),
-            failed => Problem(failed.Message, statusCode: StatusCodes.Status400BadRequest)
+            failed => BadRequest(failed.Message)
         );
     }
 }
