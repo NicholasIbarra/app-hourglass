@@ -19,8 +19,6 @@
 
   <ItemGroup>
     <Folder Include="Calendars\Commands\" />
-    <Folder Include="Calendars\Contracts\" />
-    <Folder Include="Calendars\Queries\" />
   </ItemGroup>
 
 </Project>

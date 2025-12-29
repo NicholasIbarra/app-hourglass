@@ -1,6 +1,8 @@
-    using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using Scheduler.Application.Calendars;
+using Scheduler.Application.Calendars.Contracts;
+using Scheduler.Application.Calendars.Queries;
+using SharedKernel.Queries.Pagination;
 
 namespace Cadence.Api.Controllers;
 
@@ -16,9 +18,15 @@ public class CalendarsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IReadOnlyList<CalendarDto>> List(int pageNumber)
+    public async Task<IReadOnlyList<CalendarDto>> List([FromQuery] PageRequest request)
     {
-        var response = await _mediator.Send(new GetAllCalendarsQuery { PageNumber = pageNumber });
+        var response = await _mediator.Send(new GetAllCalendarsQuery
+        {
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            SortBy = request.SortBy,
+            SortDirection = request.Direction
+        });
         return response;
     }
 
