@@ -1,4 +1,5 @@
 ﻿using OneOf;
+using OneOf.Types;
 using Scheduler.Domain.Services;
 using Shared.Entities;
 
@@ -32,5 +33,24 @@ public class Calendar : BaseEntity, IAggregateRoot
         };
 
         return calendar;
+    }
+
+    public OneOf<Success, ArgumentException, FormatException> Update(string name, string? color)
+    {
+        color = color ?? ColorService.GenerateRandomHexColor();
+
+        if (!ColorService.IsValidHexColor(color))
+        {
+            return new FormatException("Invalid calendar color provided");
+        }
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return new ArgumentException("Name cannot be empty or whitespace.", nameof(name));
+        }
+
+        Name = name;
+        Color = color;
+        return new Success();
     }
 }

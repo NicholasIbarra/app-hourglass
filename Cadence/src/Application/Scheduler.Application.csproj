@@ -17,8 +17,4 @@
     <ProjectReference Include="..\Domain\Scheduler.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Calendars\Commands\" />
-  </ItemGroup>
-
 </Project>
