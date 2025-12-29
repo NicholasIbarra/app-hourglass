@@ -9,7 +9,6 @@ using Microsoft.Extensions.Hosting;
 using Scheduler.Application;
 using Scheduler.Infrastructure.Persistence;
 using Shared.EntityFramework;
-using System;
 
 namespace Scheduler.Infrastructure;
 
@@ -20,7 +19,7 @@ public static class Startup
         builder.AddServiceDefaults();
         builder.Services
             .AddScoped<ISchedulerDbContext, SchedulerDbContext>()
-            .AddEntityFramework<SchedulerDbContext>(builder.Configuration.GetConnectionString("TestDb")!);
+            .AddEntityFramework<SchedulerDbContext>(builder.Configuration.GetConnectionString("CadenceDbDev")!);
 
         // Register MediatR handlers from Application assembly
         builder.Services.AddValidatorsFromAssembly(typeof(SchedulerApplication).Assembly);

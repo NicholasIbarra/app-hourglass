@@ -38,6 +38,9 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
 
             rp.Property(r => r.OccurrenceCount)
                 .HasColumnName("OccurrenceCount");
+
+            rp.Property(r => r.DayOfMonth)
+                .HasColumnName("DayOfMonth");
         });
 
         builder.HasMany(s => s.Exceptions)
