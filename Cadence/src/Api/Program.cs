@@ -8,4 +8,6 @@ var app = builder.Build();
 
 app.UseServiceDefaults();
 
+await app.ApplyMigrationsAsync();
+
 app.Run();

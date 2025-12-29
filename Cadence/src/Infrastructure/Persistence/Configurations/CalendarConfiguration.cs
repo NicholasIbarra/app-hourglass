@@ -8,7 +8,7 @@ public class CalendarConfiguration : IEntityTypeConfiguration<Calendar>
 {
     public void Configure(EntityTypeBuilder<Calendar> builder)
     {
-        builder.ToTable("Calendars", "dbo");
+        builder.ToTable("Calendar", "dbo");
 
         builder.HasKey(c => c.Id);
 

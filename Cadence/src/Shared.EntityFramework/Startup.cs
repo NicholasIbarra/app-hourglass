@@ -16,5 +16,12 @@ namespace Shared.EntityFramework
             return services;
         }
 
+        public static Task RunMigrations<T>(this IServiceProvider serviceProvider)
+            where T : DbContext
+        {
+            using var scope = serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<T>();
+            return dbContext.Database.MigrateAsync();
+        }
     }
 }

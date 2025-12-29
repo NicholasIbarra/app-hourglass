@@ -1,13 +1,15 @@
 ﻿using Application;
 using FluentValidation;
-using MediatR;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Scheduler.Application;
 using Scheduler.Infrastructure.Persistence;
 using Shared.EntityFramework;
+using System;
 
 namespace Scheduler.Infrastructure;
 
@@ -26,4 +28,18 @@ public static class Startup
 
         return builder;
     }
+
+    public static async Task ApplyMigrationsAsync(this WebApplication app)
+    {
+        if (app.Environment.IsDevelopment() == false)
+        {
+            return;
+        }
+
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<SchedulerDbContext>();
+
+        await db.Database.MigrateAsync();
+    }
+
 }
