@@ -3,7 +3,9 @@ using Scheduler.Application;
 using Scheduler.Domain.Entities.CalendarEvents;
 using Scheduler.Domain.Entities.Calendars;
 using Scheduler.Domain.Entities.Schedules;
+using System.Linq.Expressions;
 using System.Reflection;
+using Shared.EntityFramework.Extensions;
 
 namespace Scheduler.Infrastructure.Persistence;
 

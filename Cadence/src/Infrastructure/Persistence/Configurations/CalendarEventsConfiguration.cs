@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Scheduler.Domain.Entities.CalendarEvents;
 using Scheduler.Domain.Entities.Calendars;
 using Scheduler.Domain.Entities.Schedules;
+using Shared.EntityFramework.Extensions;
 
 namespace Scheduler.Infrastructure.Persistence.Configurations;
 
@@ -10,6 +11,7 @@ public class CalendarEventsConfiguration : IEntityTypeConfiguration<CalendarEven
 {
     public void Configure(EntityTypeBuilder<CalendarEvent> builder)
     {
+        builder.ConfigureCreatedDeletedAudit();
         builder.ToTable("CalendarEvents");
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Title)

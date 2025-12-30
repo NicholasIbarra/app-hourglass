@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.EntityFramework.Interceptors;
 
 namespace Shared.EntityFramework
 {
@@ -11,7 +12,10 @@ namespace Shared.EntityFramework
             services.AddDbContext<T>(options =>
             {
                 options.UseSqlServer(connectionString);
+                options.AddInterceptors(services.BuildServiceProvider().GetRequiredService<AuditSaveChangesInterceptor>());
             });
+
+            services.AddScoped<AuditSaveChangesInterceptor>();
 
             return services;
         }

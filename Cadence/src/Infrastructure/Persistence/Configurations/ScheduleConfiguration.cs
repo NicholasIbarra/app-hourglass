@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Scheduler.Domain.Entities.Calendars;
 using Scheduler.Domain.Entities.Schedules;
+using Shared.EntityFramework.Extensions;
 
 namespace Scheduler.Infrastructure.Persistence.Configurations;
 
@@ -9,6 +10,7 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
 {
     public void Configure(EntityTypeBuilder<Schedule> builder)
     {
+        builder.ConfigureFullAudit();
         builder.ToTable("Schedule", "dbo");
         builder.Property(s => s.Title)
             .IsRequired()

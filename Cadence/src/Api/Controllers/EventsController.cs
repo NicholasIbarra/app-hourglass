@@ -1,10 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Scheduler.Application.CalendarEvents.Queries;
-using Scheduler.Application.CalendarEvents.Contracts;
 using Scheduler.Application.CalendarEvents.Commands;
-using OneOf;
-using SharedKernel.Exceptions;
+using Scheduler.Application.CalendarEvents.Contracts;
+using Scheduler.Application.CalendarEvents.Queries;
 
 namespace Cadence.Api.Controllers;
 
