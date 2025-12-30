@@ -95,7 +95,7 @@ public class EditSeriesHandler(ISchedulerDbContext db) : IRequestHandler<EditSer
 
         var setRecurrence = schedule.SetRecurrencePattern(
             request.RecurrenceFrequency,
-            request.RecurrenceFrequency == RecurrenceFrequency.None ? 1 : request.RecurrenceInterval,
+            request.RecurrenceInterval,
             request.RecurrenceDayOfWeek,
             request.RecurrenceDayOfMonth,
             request.RecurrenceMonth,

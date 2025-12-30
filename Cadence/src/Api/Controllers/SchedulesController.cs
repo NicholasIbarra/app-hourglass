@@ -1,11 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using OneOf;
-using Scheduler.Application.Calendars.Contracts;
 using Scheduler.Application.Schedules.Commands;
 using Scheduler.Application.Schedules.Contracts;
+using Scheduler.Application.Schedules.Extensions;
 using Scheduler.Application.Schedules.Queries;
-using SharedKernel.Exceptions;
+using Scheduler.Domain.Entities.Schedules;
 using SharedKernel.Queries.Pagination;
 
 namespace Cadence.Api.Controllers;
@@ -27,6 +26,16 @@ public class SchedulesController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateScheduleDto dto)
     {
+        var weeklyFlags = WeekdayFlagsExtensions.ToDayOfTheWeekFlags(
+            dto.IsSunday,
+            dto.IsMonday,
+            dto.IsTuesday,
+            dto.IsWednesday,
+            dto.IsThursday,
+            dto.IsFriday,
+            dto.IsSaturday,
+            dto.RecurrenceFrequency);
+
         var result = await _mediator.Send(new CreateScheduleCommand
         {
             CalendarId = dto.CalendarId,
@@ -38,7 +47,7 @@ public class SchedulesController : ControllerBase
             TimeZone = dto.TimeZone,
             RecurrenceFrequency = dto.RecurrenceFrequency,
             RecurrenceInterval = dto.RecurrenceInterval,
-            RecurrenceDayOfWeek = dto.RecurrenceDayOfWeek,
+            RecurrenceDayOfWeek = weeklyFlags,
             RecurrenceDayOfMonth = dto.RecurrenceDayOfMonth,
             RecurrenceMonth = dto.RecurrenceMonth,
             RecurrenceOccurrenceCount = dto.RecurrenceOccurrenceCount,
@@ -57,6 +66,16 @@ public class SchedulesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> EditSeries(Guid id, [FromBody] EditSeriesDto dto)
     {
+        var weeklyFlags = WeekdayFlagsExtensions.ToDayOfTheWeekFlags(
+            dto.IsSunday,
+            dto.IsMonday,
+            dto.IsTuesday,
+            dto.IsWednesday,
+            dto.IsThursday,
+            dto.IsFriday,
+            dto.IsSaturday,
+            dto.RecurrenceFrequency);
+
         var result = await _mediator.Send(new EditSeriesCommand
         {
             Id = id,
@@ -68,7 +87,7 @@ public class SchedulesController : ControllerBase
             TimeZone = dto.TimeZone,
             RecurrenceFrequency = dto.RecurrenceFrequency,
             RecurrenceInterval = dto.RecurrenceInterval,
-            RecurrenceDayOfWeek = dto.RecurrenceDayOfWeek,
+            RecurrenceDayOfWeek = weeklyFlags,
             RecurrenceDayOfMonth = dto.RecurrenceDayOfMonth,
             RecurrenceMonth = dto.RecurrenceMonth,
             RecurrenceOccurrenceCount = dto.RecurrenceOccurrenceCount,

@@ -13,9 +13,17 @@ public record CreateScheduleDto
     public string? TimeZone { get; init; }
     public RecurrenceFrequency RecurrenceFrequency { get; init; }
     public int RecurrenceInterval { get; init; }
-    public DayOfTheWeek? RecurrenceDayOfWeek { get; init; }
     public int? RecurrenceDayOfMonth { get; init; }
     public int? RecurrenceMonth { get; init; }
     public int? RecurrenceOccurrenceCount { get; init; }
     public DateTime? RecurrenceEndDate { get; init; }
+
+    // Weekly selection booleans for API consumers
+    public bool IsSunday { get; init; }
+    public bool IsMonday { get; init; }
+    public bool IsTuesday { get; init; }
+    public bool IsWednesday { get; init; }
+    public bool IsThursday { get; init; }
+    public bool IsFriday { get; init; }
+    public bool IsSaturday { get; init; }
 }

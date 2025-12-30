@@ -99,15 +99,20 @@ public class Schedule : BaseEntity, IAggregateRoot
             return new ArgumentException("Recurrence end date cannot be before the CalendarEvent start date");
         }
 
-        RecurrencePattern = new RecurrencePattern
+        var recurrence = RecurrencePattern.Create(
+            frequency,
+            interval,
+            dayOfWeek,
+            dayOfMonth,
+            month,
+            occurrenceCount);
+
+        if (recurrence.IsT1)
         {
-            Frequency = frequency,
-            Interval = interval,
-            DayOfWeek = dayOfWeek,
-            DayOfMonth = dayOfMonth,
-            Month = month,
-            OccurrenceCount = occurrenceCount
-        };
+            return recurrence.AsT1;
+        }
+
+        RecurrencePattern = recurrence.AsT0;
 
         if (occurrenceCount is not null)
         {
@@ -143,8 +148,8 @@ public class Schedule : BaseEntity, IAggregateRoot
             return new ArgumentException("Start date must be before end date");
         }
 
-        StartDate = startEndDate.StartDate;
-        EndDate = startEndDate.EndDate;
+        StartDate = IsAllDay ? startEndDate.StartDate.Date : startEndDate.StartDate;
+        EndDate = IsAllDay ? startEndDate.EndDate.Date : startEndDate.EndDate;
         IsAllDay = isAllDay;
         TimeZone = timeZone;
 

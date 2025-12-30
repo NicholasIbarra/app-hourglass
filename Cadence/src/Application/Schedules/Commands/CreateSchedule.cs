@@ -81,15 +81,20 @@ public class CreateScheduleHandler(ISchedulerDbContext db, IValidator<CreateSche
             return new ValidationFailed(message);
         }
 
-        var recurrence = new RecurrencePattern
+        var recurrence = RecurrencePattern.Create
+        (
+            request.RecurrenceFrequency,
+            request.RecurrenceInterval,
+            request.RecurrenceDayOfWeek,
+            request.RecurrenceDayOfMonth,
+            request.RecurrenceMonth,
+            request.RecurrenceOccurrenceCount
+        );
+
+        if (recurrence.IsT1)
         {
-            Frequency = request.RecurrenceFrequency,
-            Interval = request.RecurrenceFrequency == RecurrenceFrequency.None ? 1 : request.RecurrenceInterval,
-            DayOfWeek = request.RecurrenceDayOfWeek,
-            DayOfMonth = request.RecurrenceDayOfMonth,
-            Month = request.RecurrenceMonth,
-            OccurrenceCount = request.RecurrenceOccurrenceCount
-        };
+            return new ValidationFailed(recurrence.AsT1.Message);
+        }
 
         var startEnd = new ScheduleDate(request.StartDate, request.EndDate);
 
@@ -100,7 +105,7 @@ public class CreateScheduleHandler(ISchedulerDbContext db, IValidator<CreateSche
             startEnd,
             request.IsAllDayEvent,
             request.TimeZone,
-            recurrence,
+            recurrence.AsT0,
             request.RecurrenceEndDate);
 
         if (created.IsT1)
