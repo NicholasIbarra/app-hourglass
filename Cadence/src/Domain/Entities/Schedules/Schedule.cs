@@ -136,6 +136,21 @@ public class Schedule : BaseEntity, IAggregateRoot
         return new Success();
     }
 
+    public OneOf<Success, ArgumentException> UpdateSeries(ScheduleDate startEndDate, bool isAllDay, string? timeZone)
+    {
+        if (startEndDate.StartDate >= startEndDate.EndDate)
+        {
+            return new ArgumentException("Start date must be before end date");
+        }
+
+        StartDate = startEndDate.StartDate;
+        EndDate = startEndDate.EndDate;
+        IsAllDay = isAllDay;
+        TimeZone = timeZone;
+
+        return new Success();
+    }
+
     internal OneOf<Success, ArgumentException> Skip(DateTime startDate)
     {
         if (startDate < StartDate)

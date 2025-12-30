@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using OneOf;
+using Scheduler.Application.Calendars.Contracts;
 using Scheduler.Application.Schedules.Commands;
 using Scheduler.Application.Schedules.Contracts;
-using SharedKernel.Exceptions;
 using Scheduler.Application.Schedules.Queries;
+using SharedKernel.Exceptions;
+using SharedKernel.Queries.Pagination;
 
 namespace Cadence.Api.Controllers;
 
@@ -49,6 +51,37 @@ public class SchedulesController : ControllerBase
         );
     }
 
+    [HttpPut("{id}")]
+    [ProducesResponseType(typeof(ScheduleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EditSeries(Guid id, [FromBody] EditSeriesDto dto)
+    {
+        var result = await _mediator.Send(new EditSeriesCommand
+        {
+            Id = id,
+            Name = dto.Name,
+            Description = dto.Description,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate,
+            IsAllDayEvent = dto.IsAllDayEvent,
+            TimeZone = dto.TimeZone,
+            RecurrenceFrequency = dto.RecurrenceFrequency,
+            RecurrenceInterval = dto.RecurrenceInterval,
+            RecurrenceDayOfWeek = dto.RecurrenceDayOfWeek,
+            RecurrenceDayOfMonth = dto.RecurrenceDayOfMonth,
+            RecurrenceMonth = dto.RecurrenceMonth,
+            RecurrenceOccurrenceCount = dto.RecurrenceOccurrenceCount,
+            RecurrenceEndDate = dto.RecurrenceEndDate
+        });
+
+        return result.Match<IActionResult>(
+            _ => Ok(),
+            notFound => NotFound(),
+            failed => BadRequest(failed.Message)
+        );
+    }
+
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ScheduleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -61,5 +94,24 @@ public class SchedulesController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResponse<ScheduleDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByCalendarId(Guid calendarId, [FromQuery] PageRequest request)
+    {
+        var result = await _mediator.Send(new GetSchedulesQuery
+        {
+            CalendarId = calendarId,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            SortBy = request.SortBy,
+            SortDirection = request.Direction
+        });
+
+        var pageInfo = new PaginationInfo(request.PageNumber, request.PageSize, result.TotalItems);
+        var response = new PagedResponse<ScheduleDto>(result.Items, pageInfo);
+
+        return Ok(response);
     }
 }
