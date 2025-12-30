@@ -12,7 +12,7 @@ namespace Scheduler.Domain.Entities.Schedules;
 public enum ScheduleExceptionType
 {
     /// <summary>
-    /// Indicates that the schedule occurrence was skipped and will not be executed.
+    /// Indicates that the schedule occurrence was cancelled and will not be executed.
     /// </summary>
     Skipped = 1,
 

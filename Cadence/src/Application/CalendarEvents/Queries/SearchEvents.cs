@@ -2,7 +2,8 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Scheduler.Application.CalendarEvents.Contracts;
-using Scheduler.Domain.Services;
+using Scheduler.Domain.Managers;
+using Scheduler.Domain.Entities.Schedules;
 
 namespace Scheduler.Application.CalendarEvents.Queries;
 
@@ -23,7 +24,7 @@ public class SearchEventsQueryValidator : AbstractValidator<SearchEventsQuery>
 }
 
 
-public class SearchEventsHandler(ISchedulerDbContext db) : IRequestHandler<SearchEventsQuery, List<SearchEventDto>>
+public class SearchEventsHandler(ISchedulerDbContext db, IScheduledEventResolver resolver) : IRequestHandler<SearchEventsQuery, List<SearchEventDto>>
 {
     public async Task<List<SearchEventDto>> Handle(SearchEventsQuery request, CancellationToken cancellationToken)
     {
@@ -60,40 +61,21 @@ public class SearchEventsHandler(ISchedulerDbContext db) : IRequestHandler<Searc
 
         foreach (var s in schedules)
         {
-            var seriesEnd = s.RecurrenceEndDate ?? end;
-
-            if (seriesEnd < start)
-            {
+            var instances = resolver.Resolve(s, start, end);
+            if (instances.Count == 0)
                 continue;
-            }
 
-            var occurrenceStart = s.StartDate;
+            var duration = s.EndDate - s.StartDate;
 
-            if (occurrenceStart < start)
+            foreach (var inst in instances)
             {
-                while (true)
-                {
-                    var next = DateService.GetNextOccurrence(occurrenceStart, s.RecurrencePattern);
-                    if (next >= start) 
-                    { 
-                        occurrenceStart = next; 
-                        break; 
-                    }
-                    
-                    occurrenceStart = next;
+                if (inst.Type != ScheduledEventInstanceType.Pseudo)
+                    continue; // skip materialized/rescheduled; concrete events already included above
 
-                    if (occurrenceStart > seriesEnd)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            while (occurrenceStart <= end && occurrenceStart <= seriesEnd)
-            {
-                var duration = s.EndDate - s.StartDate;
+                var occurrenceStart = inst.OccursAt;
                 var occurrenceEnd = occurrenceStart + duration;
 
+                // Safety overlap check
                 if (occurrenceStart <= end && occurrenceEnd >= start)
                 {
                     pseudoEvents.Add(new SearchEventDto
@@ -109,15 +91,6 @@ public class SearchEventsHandler(ISchedulerDbContext db) : IRequestHandler<Searc
                         TimeZone = s.TimeZone
                     });
                 }
-
-                var nextOccurrence = DateService.GetNextOccurrence(occurrenceStart, s.RecurrencePattern);
-                
-                if (nextOccurrence == occurrenceStart)
-                { 
-                    break; 
-                }
-
-                occurrenceStart = nextOccurrence;
             }
         }
 

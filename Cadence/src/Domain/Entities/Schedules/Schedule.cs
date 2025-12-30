@@ -156,7 +156,7 @@ public class Schedule : BaseEntity, IAggregateRoot
         return new Success();
     }
 
-    internal OneOf<Success, ArgumentException> Skip(DateTime startDate)
+    public OneOf<Success, ArgumentException> Skip(DateTime startDate)
     {
         if (startDate < StartDate)
         {
@@ -169,7 +169,7 @@ public class Schedule : BaseEntity, IAggregateRoot
         return new Success();
     }
 
-    internal OneOf<Success, ArgumentException> Reschedule(DateTime startDate, Guid rescheduledEventId)
+    public OneOf<Success, ArgumentException> Reschedule(DateTime startDate, Guid rescheduledEventId)
     {
         if (startDate < StartDate)
         {
@@ -194,7 +194,6 @@ public class Schedule : BaseEntity, IAggregateRoot
 
         return new Success();
     }
-
 
     public OneOf<Success, ArgumentNullException> UpdateDetails(string newTitle, string? newDescription)
     {

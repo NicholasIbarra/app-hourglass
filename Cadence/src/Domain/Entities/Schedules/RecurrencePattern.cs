@@ -37,6 +37,8 @@ public record RecurrencePattern
     /// </summary>
     public int? OccurrenceCount { get; set; }
 
+    internal RecurrencePattern() { }
+
     private RecurrencePattern(
         RecurrenceFrequency frequency,
         int interval,
@@ -69,6 +71,9 @@ public record RecurrencePattern
 
         switch (frequency)
         {
+            case RecurrenceFrequency.Daily:
+                // No additional validation needed for daily frequency
+                break;
             case RecurrenceFrequency.Weekly:
                 if (dayOfWeek is null || dayOfWeek == DayOfTheWeek.None)
                     return new ArgumentException("DayOfWeek is required for weekly recurrence.");

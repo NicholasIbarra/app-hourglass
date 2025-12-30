@@ -15,14 +15,14 @@ public class ScheduleException : BaseEntity
 
     internal static ScheduleException Skip(Guid ScheduleId, DateTime originalDate)
     {
-        var schduleException = new ScheduleException
+        var scheduleException = new ScheduleException
         {
             ScheduleId = ScheduleId,
             OriginalDate = originalDate,
             ExceptionType = ScheduleExceptionType.Skipped
         };
 
-        return schduleException;
+        return scheduleException;
     }
 
     internal static ScheduleException Reschedule(Guid scheduleId, DateTime originalDate, Guid rescheduledEventId)
@@ -48,7 +48,5 @@ public class ScheduleException : BaseEntity
         };
         return scheduleException;
     }
-
-
 }
 

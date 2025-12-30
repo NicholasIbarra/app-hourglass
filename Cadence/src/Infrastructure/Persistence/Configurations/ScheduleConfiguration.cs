@@ -48,6 +48,9 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
             .HasForeignKey("ScheduleId")
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Navigation(s => s.Exceptions)
+            .AutoInclude();
+
         builder.HasOne<Calendar>()
             .WithMany()
             .HasForeignKey(s => s.CalendarId)

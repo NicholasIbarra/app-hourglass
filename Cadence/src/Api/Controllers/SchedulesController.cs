@@ -5,6 +5,7 @@ using Scheduler.Application.Schedules.Contracts;
 using Scheduler.Application.Schedules.Extensions;
 using Scheduler.Application.Schedules.Queries;
 using Scheduler.Domain.Entities.Schedules;
+using OneOf.Types;
 using SharedKernel.Queries.Pagination;
 
 namespace Cadence.Api.Controllers;
@@ -132,5 +133,24 @@ public class SchedulesController : ControllerBase
         var response = new PagedResponse<ScheduleDto>(result.Items, pageInfo);
 
         return Ok(response);
+    }
+
+    [HttpPost("{id}/skip")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SkipOccurrence([FromRoute] Guid id, [FromBody] SkipOccurrenceDto dto)
+    {
+        var result = await _mediator.Send(new SkipScheduleOccurrenceCommand
+        {
+            ScheduleId = id,
+            OccurrenceStartDate = dto.OccurrenceStartDate
+        });
+
+        return result.Match<IActionResult>(
+            (_)=> NoContent(),
+            notFound => NotFound(),
+            failed => BadRequest(failed.Message)
+        );
     }
 }

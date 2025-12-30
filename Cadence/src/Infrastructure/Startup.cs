@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Scheduler.Application;
+using Scheduler.Domain.Managers;
 using Scheduler.Infrastructure.Persistence;
 using Shared.EntityFramework;
 
@@ -24,6 +25,7 @@ public static class Startup
         // Register MediatR handlers from Application assembly
         builder.Services.AddValidatorsFromAssembly(typeof(SchedulerApplication).Assembly);
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SchedulerApplication).Assembly));
+        builder.Services.AddScoped<IScheduledEventResolver, ScheduledEventResolver>();
 
         return builder;
     }

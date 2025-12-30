@@ -1,5 +1,4 @@
 using Scheduler.Domain.Entities.Schedules;
-using Scheduler.Domain.Entities.CalendarEvents;
 
 namespace Scheduler.Unit.Tests.DomainTests.Entities;
 
@@ -12,7 +11,8 @@ public class ScheduleTests
         var title = "Morning Standup";
         var description = "Daily sync";
         var startEnd = new ScheduleDate(DateTime.UtcNow.Date.AddHours(9), DateTime.UtcNow.Date.AddHours(9).AddMinutes(30));
-        var recurrence = new RecurrencePattern { Frequency = RecurrenceFrequency.Daily, Interval = 1 };
+        var recurrenceResult = RecurrencePattern.Create(RecurrenceFrequency.Weekly, interval: 1, dayOfWeek: DayOfTheWeek.Monday);
+        var recurrence = recurrenceResult.AsT0;
 
         var result = Schedule.Create(calendarId, title, description, startEnd, false, "UTC", recurrence, null);
 
@@ -26,6 +26,7 @@ public class ScheduleTests
                 Assert.Equal(startEnd.EndDate, s.EndDate);
                 Assert.Equal(recurrence.Frequency, s.RecurrencePattern.Frequency);
                 Assert.Equal(recurrence.Interval, s.RecurrencePattern.Interval);
+                Assert.Equal(recurrence.DayOfWeek, s.RecurrencePattern.DayOfWeek);
             },
             argEx => Assert.Fail($"Expected Schedule, got ArgumentException: {argEx.Message}")
         );
@@ -36,7 +37,8 @@ public class ScheduleTests
     {
         var calendarId = Guid.NewGuid();
         var startEnd = new ScheduleDate(DateTime.UtcNow, DateTime.UtcNow.AddHours(1));
-        var recurrence = new RecurrencePattern { Frequency = RecurrenceFrequency.Daily, Interval = 1 };
+        var recurrenceResult = RecurrencePattern.Create(RecurrenceFrequency.Weekly, interval: 1, dayOfWeek: DayOfTheWeek.Monday);
+        var recurrence = recurrenceResult.AsT0;
 
         var result = Schedule.Create(calendarId, " ", null, startEnd, false, null, recurrence, null);
 
@@ -51,10 +53,11 @@ public class ScheduleTests
     {
         var calendarId = Guid.NewGuid();
         var startEnd = new ScheduleDate(DateTime.UtcNow, DateTime.UtcNow.AddHours(1));
-        var recurrence = new RecurrencePattern { Frequency = RecurrenceFrequency.Daily, Interval = 1 };
+        var recurrenceResult = RecurrencePattern.Create(RecurrenceFrequency.Weekly, interval: 1, dayOfWeek: DayOfTheWeek.Monday);
+        var recurrence = recurrenceResult.AsT0;
         var schedule = Schedule.Create(calendarId, "Title", null, startEnd, false, null, recurrence, null).AsT0;
 
-        var result = schedule.SetRecurrencePattern(RecurrenceFrequency.Daily, 1, occurrenceCount: 5, recurrenceEndDate: DateTime.UtcNow.AddDays(10));
+        var result = schedule.SetRecurrencePattern(RecurrenceFrequency.Weekly, 1, dayOfWeek: DayOfTheWeek.Monday, occurrenceCount: 5, recurrenceEndDate: DateTime.UtcNow.AddDays(10));
 
         result.Switch(
             _ => Assert.Fail("Expected ArgumentException, got Success"),
@@ -67,7 +70,8 @@ public class ScheduleTests
     {
         var calendarId = Guid.NewGuid();
         var startEnd = new ScheduleDate(DateTime.UtcNow, DateTime.UtcNow.AddHours(1));
-        var recurrence = new RecurrencePattern { Frequency = RecurrenceFrequency.Daily, Interval = 1 };
+        var recurrenceResult = RecurrencePattern.Create(RecurrenceFrequency.Weekly, interval: 1, dayOfWeek: DayOfTheWeek.Monday);
+        var recurrence = recurrenceResult.AsT0;
         var schedule = Schedule.Create(calendarId, "Old Title", "Old Desc", startEnd, false, null, recurrence, null).AsT0;
 
         var result = schedule.UpdateDetails("New Title", "New Desc");
@@ -87,7 +91,8 @@ public class ScheduleTests
     {
         var calendarId = Guid.NewGuid();
         var startEnd = new ScheduleDate(DateTime.UtcNow, DateTime.UtcNow.AddHours(1));
-        var recurrence = new RecurrencePattern { Frequency = RecurrenceFrequency.Daily, Interval = 1 };
+        var recurrenceResult = RecurrencePattern.Create(RecurrenceFrequency.Weekly, interval: 1, dayOfWeek: DayOfTheWeek.Monday);
+        var recurrence = recurrenceResult.AsT0;
         var schedule = Schedule.Create(calendarId, "Old Title", null, startEnd, false, null, recurrence, null).AsT0;
 
         var result = schedule.UpdateDetails(" ", null);
