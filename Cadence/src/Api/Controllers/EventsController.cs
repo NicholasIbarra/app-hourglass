@@ -26,6 +26,20 @@ public class EventsController(IMediator mediator) : ControllerBase
         return Ok(results);
     }
 
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(SearchEventDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById([FromRoute] Guid id)
+    {
+        var result = await mediator.Send(new GetEventByIdQuery(id));
+        if (result is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(result);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(SearchEventDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

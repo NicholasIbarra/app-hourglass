@@ -16,7 +16,7 @@ public class EditSeriesCommand : IRequest<OneOf<ScheduleDto, NotFoundException, 
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public bool IsAllDayEvent { get; set; }
-    public string TimeZone { get; set; } = "";
+    public string? TimeZone { get; set; }
     public RecurrenceFrequency RecurrenceFrequency { get; set; }
     public int RecurrenceInterval { get; set; }
     public DayOfTheWeek? RecurrenceDayOfWeek { get; set; }
@@ -33,7 +33,6 @@ public class EditSeriesCommandValidator : AbstractValidator<EditSeriesCommand>
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required");
         RuleFor(x => x.StartDate).LessThan(x => x.EndDate).WithMessage("Start date must be before end date");
-        RuleFor(x => x.TimeZone).NotEmpty().WithMessage("Time zone is required");
 
         RuleFor(x => x.RecurrenceFrequency)
             .NotNull().WithMessage("Recurrence frequency is required")

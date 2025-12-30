@@ -9,7 +9,7 @@ public record EditSeriesDto
     public DateTime StartDate { get; init; }
     public DateTime EndDate { get; init; }
     public bool IsAllDayEvent { get; init; }
-    public string TimeZone { get; init; } = "";
+    public string? TimeZone { get; init; }
     public RecurrenceFrequency RecurrenceFrequency { get; init; }
     public int RecurrenceInterval { get; init; }
     public DayOfTheWeek? RecurrenceDayOfWeek { get; init; }
