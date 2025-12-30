@@ -78,4 +78,19 @@ public class CalendarsController : ControllerBase
             failed => BadRequest(failed.Message)
         );
     }
+
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete([Required] Guid id)
+    {
+        var deleted = await _mediator.Send(new DeleteCalendarCommand(id));
+
+        return deleted.Match<IActionResult>(
+            success => NoContent(),
+            notFound => NotFound(notFound.Message),
+            failed => BadRequest(failed.Message)
+        );
+    }
 }
