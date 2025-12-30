@@ -30,20 +30,20 @@ namespace Shared.EntityFramework.Interceptors
                 return;
 
             var now = DateTime.UtcNow;
-            var userId = Guid.Empty; // _currentUserProvider.UserId;
+            var username = "system"; // _currentUserProvider.UserId;
 
             foreach (var entry in context.ChangeTracker.Entries())
             {
                 if (entry.State == EntityState.Added)
                 {
                     SetIfExists(entry, AuditShadowProperties.CreatedAt, now);
-                    SetIfExists(entry, AuditShadowProperties.CreatedBy, userId);
+                    SetIfExists(entry, AuditShadowProperties.CreatedBy, username);
                 }
 
                 if (entry.State == EntityState.Modified)
                 {
                     SetIfExists(entry, AuditShadowProperties.UpdatedAt, now);
-                    SetIfExists(entry, AuditShadowProperties.UpdatedBy, userId);
+                    SetIfExists(entry, AuditShadowProperties.UpdatedBy, username);
                 }
 
                 if (entry.State == EntityState.Deleted)
@@ -56,7 +56,7 @@ namespace Shared.EntityFramework.Interceptors
 
                     SetIfExists(entry, AuditShadowProperties.IsDeleted, true);
                     SetIfExists(entry, AuditShadowProperties.DeletedAt, now);
-                    SetIfExists(entry, AuditShadowProperties.DeletedBy, userId);
+                    SetIfExists(entry, AuditShadowProperties.DeletedBy, username);
                 }
             }
         }
