@@ -61,17 +61,31 @@ public class SearchEventsHandler(ISchedulerDbContext db) : IRequestHandler<Searc
         foreach (var s in schedules)
         {
             var seriesEnd = s.RecurrenceEndDate ?? end;
-            if (seriesEnd < start) continue;
+
+            if (seriesEnd < start)
+            {
+                continue;
+            }
 
             var occurrenceStart = s.StartDate;
+
             if (occurrenceStart < start)
             {
                 while (true)
                 {
                     var next = DateService.GetNextOccurrence(occurrenceStart, s.RecurrencePattern);
-                    if (next >= start) { occurrenceStart = next; break; }
+                    if (next >= start) 
+                    { 
+                        occurrenceStart = next; 
+                        break; 
+                    }
+                    
                     occurrenceStart = next;
-                    if (occurrenceStart > seriesEnd) break;
+
+                    if (occurrenceStart > seriesEnd)
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -97,7 +111,12 @@ public class SearchEventsHandler(ISchedulerDbContext db) : IRequestHandler<Searc
                 }
 
                 var nextOccurrence = DateService.GetNextOccurrence(occurrenceStart, s.RecurrencePattern);
-                if (nextOccurrence == occurrenceStart) break;
+                
+                if (nextOccurrence == occurrenceStart)
+                { 
+                    break; 
+                }
+
                 occurrenceStart = nextOccurrence;
             }
         }
