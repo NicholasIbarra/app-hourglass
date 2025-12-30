@@ -60,6 +60,30 @@ public class EventsController(IMediator mediator) : ControllerBase
         );
     }
 
+    [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateEventDto dto)
+    {
+        var result = await mediator.Send(new UpdateEventCommand
+        {
+            Id = id,
+            Title = dto.Title,
+            Description = dto.Description,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate,
+            IsAllDay = dto.IsAllDay,
+            TimeZone = dto.TimeZone
+        });
+
+        return result.Match<IActionResult>(
+            success => NoContent(),
+            notFound => NotFound(notFound.Message),
+            failed => BadRequest(failed.Message)
+        );
+    }
+
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

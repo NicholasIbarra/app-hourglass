@@ -56,10 +56,12 @@ public class CalendarEvent : BaseEntity, IAggregateRoot
         return calendarEvent;
     }
 
-    public void Reschedule([NotNull] EventDate startEndDate)
+    public void Reschedule([NotNull] EventDate startEndDate, bool isAllDay, string? timeZone)
     {
         StartDate = startEndDate.StartDate;
         EndDate = startEndDate.EndDate;
+        IsAllDay = isAllDay;
+        TimeZone = timeZone;
     }
 
     public OneOf<Success, ArgumentNullException> UpdateDetails(string newTitle, string? newDescription)
