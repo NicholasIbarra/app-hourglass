@@ -12,30 +12,38 @@ public class CalendarEventsConfiguration : IEntityTypeConfiguration<CalendarEven
     public void Configure(EntityTypeBuilder<CalendarEvent> builder)
     {
         builder.ConfigureCreatedDeletedAudit();
+        
         builder.ToTable("CalendarEvents");
+        
         builder.HasKey(e => e.Id);
+        
         builder.Property(e => e.Title)
             .IsRequired()
             .HasMaxLength(200);
+
         builder.Property(e => e.Description)
             .HasMaxLength(1000);
+        
         builder.Property(e => e.StartDate)
             .IsRequired();
+        
         builder.Property(e => e.EndDate)
             .IsRequired();
+        
         builder.Property(e => e.IsAllDay)
             .IsRequired();
+        
         builder.Property(e => e.TimeZone)
             .HasMaxLength(100);
 
         builder.HasOne<Calendar>()
             .WithMany()
             .HasForeignKey(e => e.CalendarId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<Schedule>()
             .WithMany()
             .HasForeignKey(e => e.ScheduleId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

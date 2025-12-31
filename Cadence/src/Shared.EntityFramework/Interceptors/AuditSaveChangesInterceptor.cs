@@ -34,6 +34,8 @@ namespace Shared.EntityFramework.Interceptors
 
             foreach (var entry in context.ChangeTracker.Entries())
             {
+                var name = entry.Metadata.Name;
+
                 if (entry.State == EntityState.Added)
                 {
                     SetIfExists(entry, AuditShadowProperties.CreatedAt, now);
@@ -48,11 +50,19 @@ namespace Shared.EntityFramework.Interceptors
 
                 if (entry.State == EntityState.Deleted)
                 {
+                    // When an owned value object (owned entity type) is marked as Deleted due to principal soft-delete,
+                    // ensure it isn't physically deleted or nulled out. Mark it as Unchanged and skip auditing.
+                    if (entry.Metadata.IsOwned())
+                    {
+                        entry.State = EntityState.Unchanged;
+                        continue;
+                    }
+
                     if (!HasProperty(entry, AuditShadowProperties.IsDeleted))
                         continue;
 
-                    // Convert hard delete → soft delete
-                    entry.State = EntityState.Modified;
+                    // Switch to unchanged to avoid EF cascading delete/nulling while still updating shadow props.
+                    entry.State = EntityState.Unchanged;
 
                     SetIfExists(entry, AuditShadowProperties.IsDeleted, true);
                     SetIfExists(entry, AuditShadowProperties.DeletedAt, now);
@@ -72,7 +82,12 @@ namespace Shared.EntityFramework.Interceptors
             if (!HasProperty(entry, propertyName))
                 return;
 
-            entry.Property(propertyName).CurrentValue = value;
+            var propEntry = entry.Property(propertyName);
+
+            propEntry.CurrentValue = value;
+            propEntry.IsModified = true;
+
+
         }
     }
 

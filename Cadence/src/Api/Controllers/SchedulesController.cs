@@ -153,4 +153,18 @@ public class SchedulesController : ControllerBase
             failed => BadRequest(failed.Message)
         );
     }
+
+    [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete([FromRoute] Guid id)
+    {
+        var result = await _mediator.Send(new DeleteScheduleCommand(id));
+        return result.Match<IActionResult>(
+            success => NoContent(),
+            notFound => NotFound(notFound.Message),
+            failed => BadRequest(failed.Message)
+        );
+    }
 }

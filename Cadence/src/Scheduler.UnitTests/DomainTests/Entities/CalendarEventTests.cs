@@ -49,7 +49,7 @@ public class CalendarEventTests
         var evt = CalendarEvent.Create(Guid.NewGuid(), "Title", null, startEnd, false, "UTC", null).AsT0;
 
         var newDates = new EventDate(DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1).AddHours(2));
-        evt.Reschedule(newDates);
+        evt.Reschedule(newDates, evt.IsAllDay, evt.TimeZone);
 
         Assert.Equal(newDates.StartDate, evt.StartDate);
         Assert.Equal(newDates.EndDate, evt.EndDate);

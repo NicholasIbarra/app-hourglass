@@ -11,7 +11,9 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
     public void Configure(EntityTypeBuilder<Schedule> builder)
     {
         builder.ConfigureFullAudit();
+        
         builder.ToTable("Schedule", "dbo");
+        
         builder.Property(s => s.Title)
             .IsRequired()
             .HasMaxLength(200);
@@ -48,7 +50,7 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
         builder.HasMany(s => s.Exceptions)
             .WithOne()
             .HasForeignKey("ScheduleId")
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Navigation(s => s.Exceptions)
             .AutoInclude();
@@ -56,6 +58,6 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
         builder.HasOne<Calendar>()
             .WithMany()
             .HasForeignKey(s => s.CalendarId)
-            .OnDelete(DeleteBehavior.NoAction);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
