@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
-using System.Text.Json;
 
 namespace Application.Imports
 {
@@ -122,7 +121,7 @@ namespace Application.Imports
         /// <summary>
         /// Entry point when a user uploads a file.
         /// </summary>
-        public async Task<ImportResult> Import(IFormFile file)
+        public async Task<ImportResult> RunAsync(IFormFile file)
         {
             _logger.LogInformation("Starting import: {FileName}", file.FileName);
 
@@ -222,16 +221,15 @@ namespace Application.Imports
                     else
                     {
                         import.UpdateProgress(import.ProcessedRecords + 1);
-                        await _hub.Clients.All.SendAsync("ImportProgress", new
-                        {
-                            ImportId = import.Id,
-                            ProcessedRecords = import.ProcessedRecords,
-                            TotalRecords = import.TotalRecords,
-                            Status = import.Status.ToString()
-                        });
-
-                        // publish websocket event, etc.
                     }
+
+                    await _hub.Clients.All.SendAsync("ImportProgress", new
+                    {
+                        ImportId = import.Id,
+                        ProcessedRecords = import.ProcessedRecords,
+                        TotalRecords = import.TotalRecords,
+                        Status = import.Status.ToString()
+                    });
 
                     await _db.SaveChangesAsync();
                 }

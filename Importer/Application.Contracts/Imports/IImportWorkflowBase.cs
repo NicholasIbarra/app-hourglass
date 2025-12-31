@@ -32,6 +32,6 @@ namespace Application.Contracts.Imports
     public interface IImportWorkflowBase<IImport> where IImport : ImportMappingDto
     {
         //Task<Guid> Import(Stream fileStream);
-        Task<ImportResult> Import(IFormFile file);
+        Task<ImportResult> RunAsync(IFormFile file);
     }
 }

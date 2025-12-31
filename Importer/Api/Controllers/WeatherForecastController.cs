@@ -55,7 +55,7 @@ namespace Api.Controllers
                 return BadRequest("File is required.");
 
 
-            var result = await _importWorkflow.Import(importDto);
+            var result = await _importWorkflow.RunAsync(importDto);
             if (result.Success)
             {
                 return Ok(new { Message = "Import started successfully." });
