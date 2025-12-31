@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -7,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace IntegrationSolution.ServiceDefaults.Controllers;
 
-public static class ControllerExtensions
+public static partial class ControllerExtensions
 {
     private const string HealthEndpointPath = "/health";
     private const string AlivenessEndpointPath = "/alive";
@@ -29,9 +30,14 @@ public static class ControllerExtensions
 
     public static TBuilder AddEndpointControllers<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.Services.AddControllers();
+        builder.Services.AddControllers(options =>
+        {
+            options.Conventions.Add(new RouteTokenTransformerConvention(new KebabParameterTransformer()));
+            options.Filters.Add<EnforceProblemDetailsFilter>();
+        });
         builder.Services.AddEndpointsApiExplorer();
 
         return builder;
     }
+
 }

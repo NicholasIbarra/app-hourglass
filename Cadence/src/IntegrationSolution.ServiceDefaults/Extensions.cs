@@ -1,14 +1,16 @@
 using IntegrationSolution.ServiceDefaults.Controllers;
 using IntegrationSolution.ServiceDefaults.DefaultExtensions;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-using ServiceDefaults.Mediator;
 using ServiceDefaults.ExceptionHandling;
+using ServiceDefaults.Mediator;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -24,10 +26,18 @@ public static class Extensions
         builder.AddEndpointControllers();
         builder.AddSwagger();
 
+        builder.Services.Configure<RouteHandlerOptions>(options =>
+        {
+            options.ThrowOnBadRequest = true;
+        });
+
         builder.Services.AddServiceDiscovery();
         builder.Services.AddMediatrBehaviors();
-        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
+
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddSingleton<ISystemClock, SystemClock>();
+
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
             http.AddStandardResilienceHandler();
@@ -90,7 +100,8 @@ public static class Extensions
 
     public static WebApplication UseServiceDefaults(this WebApplication app)
     {
-        app.UseExceptionHandler();
+        app.UseExceptionHandler(o => { });
+        app.UseStatusCodePages();
         app.MapDefaultEndpoints();
         app.MapControllers();
         app.UseHttpsRedirection();
