@@ -148,7 +148,32 @@ public class SchedulesController : ControllerBase
         });
 
         return result.Match<IActionResult>(
-            (_)=> NoContent(),
+            _=> NoContent(),
+            notFound => NotFound(),
+            failed => BadRequest(failed.Message)
+        );
+    }
+
+    [HttpPost("{id}/reschedule")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RescheduleOccurrence([FromRoute] Guid id, [FromBody] RescheduleOccurrenceDto dto)
+    {
+        var result = await _mediator.Send(new RescheduleScheduleOccurrenceCommand
+        {
+            ScheduleId = id,
+            OccurrenceStartDate = dto.OccurrenceStartDate,
+            Name = dto.Name,
+            Description = dto.Description,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate,
+            IsAllDayEvent = dto.IsAllDayEvent,
+            TimeZone = dto.TimeZone
+        });
+
+        return result.Match<IActionResult>(
+            _ => NoContent(),
             notFound => NotFound(),
             failed => BadRequest(failed.Message)
         );
@@ -161,6 +186,7 @@ public class SchedulesController : ControllerBase
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
         var result = await _mediator.Send(new DeleteScheduleCommand(id));
+
         return result.Match<IActionResult>(
             success => NoContent(),
             notFound => NotFound(notFound.Message),
