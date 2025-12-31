@@ -7,6 +7,7 @@ using Scheduler.Application.Schedules.Queries;
 using Scheduler.Domain.Entities.Schedules;
 using OneOf.Types;
 using SharedKernel.Queries.Pagination;
+using Scheduler.Application.CalendarEvents.Contracts;
 
 namespace Cadence.Api.Controllers;
 
@@ -155,7 +156,7 @@ public class SchedulesController : ControllerBase
     }
 
     [HttpPost("{id}/reschedule")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(SearchEventDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RescheduleOccurrence([FromRoute] Guid id, [FromBody] RescheduleOccurrenceDto dto)
@@ -173,7 +174,7 @@ public class SchedulesController : ControllerBase
         });
 
         return result.Match<IActionResult>(
-            _ => NoContent(),
+            success => CreatedAtAction(nameof(EventsController.GetById), "Events", new { id = success.Id }, success),
             notFound => NotFound(),
             failed => BadRequest(failed.Message)
         );
