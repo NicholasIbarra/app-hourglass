@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Scheduler.Domain.Entities.Schedules;
+﻿namespace Scheduler.Domain.Entities.Schedules;
 
 public sealed class ScheduledEventInstance
 {
