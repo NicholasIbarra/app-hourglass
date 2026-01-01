@@ -1,4 +1,6 @@
 using Scheduler.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 

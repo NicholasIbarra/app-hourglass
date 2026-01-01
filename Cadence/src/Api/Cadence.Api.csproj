@@ -9,6 +9,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Application\Scheduler.Application.csproj" />
     <ProjectReference Include="..\Infrastructure\Scheduler.Infrastructure.csproj" />
+    <ProjectReference Include="..\Domain\Scheduler.Domain.csproj" />
+    <ProjectReference Include="..\Shared\SharedKernel.csproj" />
+    <ProjectReference Include="..\IntegrationSolution.ServiceDefaults\ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,15 +1,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Scheduler.Application.CalendarEvents.Commands;
-using Scheduler.Application.CalendarEvents.Contracts;
 using Scheduler.Application.CalendarEvents.Queries;
+using Cadence.Api.Models.V1.Events;
+using Scheduler.Application.CalendarEvents.Contracts;
 
-namespace Cadence.Api.Controllers;
+namespace Cadence.Api.Controllers.V1;
 
-[ApiController]
-[Route("api/events")]
 [Produces("application/json")]
-public class EventsController(IMediator mediator) : ControllerBase
+public class EventsController(IMediator mediator) : ApiControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(List<SearchEventDto>), StatusCodes.Status200OK)]
@@ -41,7 +40,7 @@ public class EventsController(IMediator mediator) : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(SearchEventDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] CreateEventDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateEventRequest dto)
     {
         var result = await mediator.Send(new CreateEventCommand
         {
@@ -64,7 +63,7 @@ public class EventsController(IMediator mediator) : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateEventDto dto)
+    public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateEventRequest dto)
     {
         var result = await mediator.Send(new UpdateEventCommand
         {

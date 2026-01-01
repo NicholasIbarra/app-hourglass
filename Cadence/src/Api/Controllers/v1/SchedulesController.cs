@@ -1,20 +1,18 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Scheduler.Application.Schedules.Commands;
-using Scheduler.Application.Schedules.Contracts;
-using Scheduler.Application.Schedules.Extensions;
 using Scheduler.Application.Schedules.Queries;
+using Scheduler.Application.Schedules.Extensions;
 using Scheduler.Domain.Entities.Schedules;
-using OneOf.Types;
 using SharedKernel.Queries.Pagination;
 using Scheduler.Application.CalendarEvents.Contracts;
+using Cadence.Api.Models.V1.Schedules;
+using Scheduler.Application.Schedules.Contracts;
 
-namespace Cadence.Api.Controllers;
+namespace Cadence.Api.Controllers.V1;
 
-[ApiController]
-[Route("api/schedules")]
 [Produces("application/json")]
-public class SchedulesController : ControllerBase
+public class SchedulesController : ApiControllerBase
 {
     private readonly IMediator _mediator;
 
@@ -26,7 +24,7 @@ public class SchedulesController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ScheduleDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] CreateScheduleDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateScheduleRequest dto)
     {
         var weeklyFlags = WeekdayFlagsExtensions.ToDayOfTheWeekFlags(
             dto.IsSunday,
@@ -66,7 +64,7 @@ public class SchedulesController : ControllerBase
     [ProducesResponseType(typeof(ScheduleDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> EditSeries(Guid id, [FromBody] EditSeriesDto dto)
+    public async Task<IActionResult> EditSeries(Guid id, [FromBody] EditSeriesRequest dto)
     {
         var weeklyFlags = WeekdayFlagsExtensions.ToDayOfTheWeekFlags(
             dto.IsSunday,
@@ -123,11 +121,7 @@ public class SchedulesController : ControllerBase
     {
         var result = await _mediator.Send(new GetSchedulesQuery
         {
-            CalendarId = calendarId,
-            PageNumber = request.PageNumber,
-            PageSize = request.PageSize,
-            SortBy = request.SortBy,
-            SortDirection = request.Direction
+            CalendarId = calendarId
         });
 
         var pageInfo = new PaginationInfo(request.PageNumber, request.PageSize, result.TotalItems);
@@ -140,7 +134,7 @@ public class SchedulesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SkipOccurrence([FromRoute] Guid id, [FromBody] SkipOccurrenceDto dto)
+    public async Task<IActionResult> SkipOccurrence([FromRoute] Guid id, [FromBody] SkipOccurrenceRequest dto)
     {
         var result = await _mediator.Send(new SkipScheduleOccurrenceCommand
         {
@@ -156,10 +150,10 @@ public class SchedulesController : ControllerBase
     }
 
     [HttpPost("{id}/reschedule")]
-    [ProducesResponseType(typeof(SearchEventDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(Scheduler.Application.CalendarEvents.Contracts.SearchEventDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RescheduleOccurrence([FromRoute] Guid id, [FromBody] RescheduleOccurrenceDto dto)
+    public async Task<IActionResult> RescheduleOccurrence([FromRoute] Guid id, [FromBody] RescheduleOccurrenceRequest dto)
     {
         var result = await _mediator.Send(new RescheduleScheduleOccurrenceCommand
         {
