@@ -47,6 +47,17 @@ app.UseServiceDefaults();
 app.MapOpenApi();
 app.UseHangfireDashboard("/jobs");
 
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "API");
+        options.RoutePrefix = "swagger";
+    });
+}
+
 app.MapPost("/imports/users", (IBackgroundJobClient backgroundJobs, int? count) =>
 {
     var importCount = count.GetValueOrDefault(5000);

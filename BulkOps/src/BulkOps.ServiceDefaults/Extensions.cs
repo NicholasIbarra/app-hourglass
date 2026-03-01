@@ -17,6 +17,9 @@ public static class Extensions
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.ConfigureOpenTelemetry();
+        builder.Services.AddSwaggerGen();
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
 
         builder.Services.AddHealthChecks()
             .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
