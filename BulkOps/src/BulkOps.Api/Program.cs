@@ -1,5 +1,6 @@
 using BulkOps.Api.Data;
 using BulkOps.Api.Jobs;
+using BulkOps.Api.Metrics;
 using BulkOps.Api.Repositories;
 using BulkOps.Api.Services;
 using Hangfire;
@@ -19,7 +20,11 @@ builder.Services.AddDbContext<BulkOpsDbContext>(options =>
 
 builder.Services.AddScoped<IUserBulkRepository, UserBulkRepository>();
 builder.Services.AddSingleton<IFakeUserGenerator, FakeUserGenerator>();
+builder.Services.AddSingleton<BulkImportMetrics>();
 builder.Services.AddScoped<UserImportJob>();
+
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics => metrics.AddMeter(BulkImportMetrics.MeterName));
 
 builder.Services.AddHangfire(configuration =>
 {

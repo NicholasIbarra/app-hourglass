@@ -19,7 +19,6 @@ public class BulkOpsDbContext(DbContextOptions<BulkOpsDbContext> options) : DbCo
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Name).HasMaxLength(150).IsRequired();
             entity.Property(x => x.City).HasMaxLength(100).IsRequired();
-            entity.HasIndex(x => x.Name).IsUnique();
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -30,8 +29,6 @@ public class BulkOpsDbContext(DbContextOptions<BulkOpsDbContext> options) : DbCo
             entity.Property(x => x.FirstName).HasMaxLength(100).IsRequired();
             entity.Property(x => x.LastName).HasMaxLength(100).IsRequired();
             entity.Property(x => x.Email).HasMaxLength(255).IsRequired();
-            entity.HasIndex(x => x.Email).IsUnique();
-            entity.HasIndex(x => x.ExternalId).IsUnique();
 
             entity.HasMany(x => x.Offices)
                 .WithMany(x => x.Users)
