@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using McpSandbox.Server.Data;
+using McpSandbox.Server.Domain.Entities.Offices;
 using McpSandbox.Server.Domain.Entities.Users;
 
 namespace McpSandbox.Server.Controllers;
@@ -21,6 +22,7 @@ public sealed class UsersController : ControllerBase
     {
         var user = await _dbContext.Users
             .AsNoTracking()
+            .Include(u => u.Offices)
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
 
         if (user is null)
@@ -41,7 +43,7 @@ public sealed class UsersController : ControllerBase
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var query = _dbContext.Users.AsNoTracking();
+        IQueryable<User> query = _dbContext.Users.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -55,6 +57,7 @@ public sealed class UsersController : ControllerBase
         var totalCount = await query.CountAsync(cancellationToken);
 
         var users = await query
+            .Include(u => u.Offices)
             .OrderBy(u => u.Name)
             .ThenBy(u => u.Id)
             .Skip((page - 1) * pageSize)
@@ -89,6 +92,23 @@ public sealed class UsersController : ControllerBase
             LastLoginAt = request.LastLoginAt
         };
 
+        var officeIds = request.OfficeIds?.Distinct().ToList() ?? [];
+        if (officeIds.Count > 0)
+        {
+            var offices = await _dbContext.Offices
+                .Where(o => officeIds.Contains(o.Id))
+                .ToListAsync(cancellationToken);
+
+            var foundOfficeIds = offices.Select(o => o.Id).ToHashSet();
+            var missingOfficeIds = officeIds.Where(id => !foundOfficeIds.Contains(id)).ToList();
+            if (missingOfficeIds.Count > 0)
+            {
+                return BadRequest(new { Message = "Some office IDs were not found.", OfficeIds = missingOfficeIds });
+            }
+
+            user.Offices = offices;
+        }
+
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -119,6 +139,24 @@ public sealed class UsersController : ControllerBase
         user.AvatarUrl = request.AvatarUrl;
         user.LastLoginAt = request.LastLoginAt;
         user.UpdatedAt = DateTimeOffset.UtcNow;
+
+        var officeIds = request.OfficeIds?.Distinct().ToList() ?? [];
+        var offices = await _dbContext.Offices
+            .Where(o => officeIds.Contains(o.Id))
+            .ToListAsync(cancellationToken);
+
+        var foundOfficeIds = offices.Select(o => o.Id).ToHashSet();
+        var missingOfficeIds = officeIds.Where(officeId => !foundOfficeIds.Contains(officeId)).ToList();
+        if (missingOfficeIds.Count > 0)
+        {
+            return BadRequest(new { Message = "Some office IDs were not found.", OfficeIds = missingOfficeIds });
+        }
+
+        user.Offices.Clear();
+        foreach (var office in offices)
+        {
+            user.Offices.Add(office);
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -154,7 +192,8 @@ public sealed class UsersController : ControllerBase
             user.AvatarUrl,
             user.LastLoginAt,
             user.CreatedAt,
-            user.UpdatedAt);
+            user.UpdatedAt,
+            user.Offices.Select(o => o.Id).ToList());
     }
 
     public sealed record CreateUserRequest(
@@ -166,7 +205,8 @@ public sealed class UsersController : ControllerBase
         string? TimeZone,
         string? Locale,
         string? AvatarUrl,
-        DateTimeOffset? LastLoginAt);
+        DateTimeOffset? LastLoginAt,
+        IReadOnlyList<Guid>? OfficeIds);
 
     public sealed record UpdateUserRequest(
         string Name,
@@ -177,7 +217,8 @@ public sealed class UsersController : ControllerBase
         string? TimeZone,
         string? Locale,
         string? AvatarUrl,
-        DateTimeOffset? LastLoginAt);
+        DateTimeOffset? LastLoginAt,
+        IReadOnlyList<Guid>? OfficeIds);
 
     public sealed record UserDto(
         Guid Id,
@@ -191,7 +232,8 @@ public sealed class UsersController : ControllerBase
         string? AvatarUrl,
         DateTimeOffset? LastLoginAt,
         DateTimeOffset CreatedAt,
-        DateTimeOffset? UpdatedAt);
+        DateTimeOffset? UpdatedAt,
+        IReadOnlyList<Guid> OfficeIds);
 
     public sealed record PagedResult<T>(
         int Page,
