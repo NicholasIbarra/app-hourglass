@@ -44,7 +44,7 @@ public class BulkOpsDbContext(DbContextOptions<BulkOpsDbContext> options) : DbCo
                         .HasOne(x => x.User)
                         .WithMany(x => x.UserOffices)
                         .HasForeignKey(x => x.UserId),
-                    configureJoin: relationship =>
+                    configureJoinEntityType: relationship =>
                     {
                         relationship.ToTable("UserOffices");
                         relationship.HasKey(x => new { x.UserId, x.OfficeId });

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -60,7 +62,13 @@ public static class Extensions
 
     public static WebApplication UseServiceDefaults(this WebApplication app)
     {
-        app.MapDefaultEndpoints();
+        app.MapHealthChecks(HealthEndpointPath);
+
+        app.MapHealthChecks(AlivenessEndpointPath, new HealthCheckOptions
+        {
+            Predicate = r => r.Tags.Contains("live")
+        });
+
         app.UseHttpsRedirection();
 
         return app;

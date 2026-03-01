@@ -76,7 +76,7 @@ app.MapGet("/imports/users/demo-payload", (IFakeUserGenerator generator) =>
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BulkOpsDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();
 }
 
 app.Run();
