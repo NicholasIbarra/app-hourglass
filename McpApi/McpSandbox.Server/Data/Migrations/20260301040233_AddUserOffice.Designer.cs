@@ -4,6 +4,7 @@ using McpSandbox.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace McpSandbox.Server.Data.Migrations
 {
     [DbContext(typeof(McpSandboxDbContext))]
-    partial class McpSandboxDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260301040233_AddUserOffice")]
+    partial class AddUserOffice
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

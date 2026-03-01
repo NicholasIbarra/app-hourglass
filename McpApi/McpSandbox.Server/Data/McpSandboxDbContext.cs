@@ -62,6 +62,15 @@ public sealed class McpSandboxDbContext : DbContext
                 .HasMaxLength(32);
 
             entity.HasIndex(e => e.Email);
+
+            // Many-to-many User <-> Office (implicit join table)
+            entity.HasMany(e => e.Offices)
+                .WithMany()
+                .UsingEntity<Dictionary<string, object>>(
+                    "UserOffice",
+                    join => join.HasOne<Office>().WithMany().HasForeignKey("OfficeId"),
+                    join => join.HasOne<User>().WithMany().HasForeignKey("UserId"),
+                    join => join.HasKey("UserId", "OfficeId"));
         });
 
         modelBuilder.Entity<Office>(entity =>

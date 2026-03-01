@@ -1,7 +1,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var sql = builder.AddSqlServer("mssql")
-    .WithDataVolume();
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent);
 
 var mcpdb = sql.AddDatabase("mcpdb");
 

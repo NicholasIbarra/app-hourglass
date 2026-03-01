@@ -1,3 +1,5 @@
+using McpSandbox.Server.Domain.Entities.Offices;
+
 namespace McpSandbox.Server.Domain.Entities.Users;
 
 public class User : BaseEntity
@@ -19,4 +21,6 @@ public class User : BaseEntity
     public string? AvatarUrl { get; set; }
 
     public DateTimeOffset? LastLoginAt { get; set; }
+
+    public virtual ICollection<Office> Offices { get; set; } = [];
 }
