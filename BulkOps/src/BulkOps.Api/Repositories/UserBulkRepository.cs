@@ -40,6 +40,12 @@ public class UserBulkRepository(BulkOpsDbContext dbContext, ILogger<UserBulkRepo
         var officeLookup = existingOffices
             .ToDictionary(x => x.Name, x => x, StringComparer.OrdinalIgnoreCase);
 
+        await dbContext.BulkInsertAsync(batch.ApplicationUsers, new BulkConfig
+        {
+            BatchSize = 1000,
+            PreserveInsertOrder = true
+        }, cancellationToken: cancellationToken);
+
         await dbContext.BulkInsertAsync(batch.Users, new BulkConfig
         {
             BatchSize = 1000,
@@ -47,23 +53,18 @@ public class UserBulkRepository(BulkOpsDbContext dbContext, ILogger<UserBulkRepo
             SetOutputIdentity = true
         }, cancellationToken: cancellationToken);
 
-        var assignments = batch.UserOffices
-            .Select(x =>
+        var userOffices = batch.Users
+            .SelectMany(u => u.UserOffices.Select(uo => new UserOffice
             {
-                var office = officeLookup[x.Office.Name];
-
-                return new UserOffice
-                {
-                    UserId = x.User.Id,
-                    OfficeId = office.Id,
-                    AssignedAtUtc = x.AssignedAtUtc,
-                    User = x.User,
-                    Office = office
-                };
-            })
+                UserId = u.Id,
+                OfficeId = officeLookup[uo.Office.Name].Id,
+                AssignedAtUtc = uo.AssignedAtUtc,
+                User = u,
+                Office = officeLookup[uo.Office.Name]
+            }))
             .ToList();
 
-        await dbContext.BulkInsertAsync(assignments, new BulkConfig
+        await dbContext.BulkInsertAsync(userOffices, new BulkConfig
         {
             BatchSize = 2000,
             PreserveInsertOrder = true,
@@ -71,10 +72,10 @@ public class UserBulkRepository(BulkOpsDbContext dbContext, ILogger<UserBulkRepo
         }, cancellationToken: cancellationToken);
 
         logger.LogInformation(
-            "Bulk imported {UserCount} users, {OfficeCount} offices, and {AssignmentCount} user-office assignments.",
+            "Bulk imported {UserCount} users with identities, {OfficeCount} offices, and {AssignmentCount} user-office assignments.",
             batch.Users.Count,
             existingOffices.Count,
-            assignments.Count);
+            userOffices.Count);
 
         return batch.Users.Count;
     }

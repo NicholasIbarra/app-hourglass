@@ -1,5 +1,6 @@
 using Bogus;
 using BulkOps.Api.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace BulkOps.Api.Services;
 
@@ -27,6 +28,7 @@ public class FakeUserGenerator : IFakeUserGenerator
         }
 
         var faker = new Faker();
+        var passwordHasher = new PasswordHasher<ApplicationUser>();
 
         var offices = OfficeNames
             .Select(name => new Office
@@ -45,14 +47,29 @@ public class FakeUserGenerator : IFakeUserGenerator
 
         var users = userFaker.Generate(userCount);
 
-        var assignments = new List<UserOffice>(userCount);
+        var applicationUsers = new List<ApplicationUser>(userCount);
 
         foreach (var user in users)
         {
-            var office = faker.PickRandom(offices);
-            user.Offices.Add(office);
+            var appUser = new ApplicationUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = user.Email,
+                NormalizedUserName = user.Email.ToUpperInvariant(),
+                Email = user.Email,
+                NormalizedEmail = user.Email.ToUpperInvariant(),
+                EmailConfirmed = true,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                ConcurrencyStamp = Guid.NewGuid().ToString()
+            };
 
-            assignments.Add(new UserOffice
+            appUser.PasswordHash = passwordHasher.HashPassword(appUser, "Password123!");
+
+            user.IdentityId = appUser.Id;
+            applicationUsers.Add(appUser);
+
+            var office = faker.PickRandom(offices);
+            user.UserOffices.Add(new UserOffice
             {
                 User = user,
                 Office = office,
@@ -63,8 +80,9 @@ public class FakeUserGenerator : IFakeUserGenerator
         return new GeneratedUserBatch
         {
             Offices = offices,
-            Users = users,
-            UserOffices = assignments
+            ApplicationUsers = applicationUsers,
+            Users = users
         };
     }
 }
+

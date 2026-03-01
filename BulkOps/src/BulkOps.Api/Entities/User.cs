@@ -14,6 +14,10 @@ public class User
 
     public DateOnly DateOfBirth { get; set; }
 
+    public string? IdentityId { get; set; }
+
+    public ApplicationUser? Identity { get; set; }
+
     public ICollection<Office> Offices { get; set; } = new List<Office>();
 
     public ICollection<UserOffice> UserOffices { get; set; } = new List<UserOffice>();

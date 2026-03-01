@@ -1,4 +1,5 @@
 using BulkOps.Api.Data;
+using BulkOps.Api.Entities;
 using BulkOps.Api.Jobs;
 using BulkOps.Api.Metrics;
 using BulkOps.Api.Repositories;
@@ -17,6 +18,9 @@ var connectionString = builder.Configuration.GetConnectionString("bulkopsdb")
 
 builder.Services.AddDbContext<BulkOpsDbContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Services.AddIdentityCore<ApplicationUser>()
+    .AddEntityFrameworkStores<BulkOpsDbContext>();
 
 builder.Services.AddScoped<IUserBulkRepository, UserBulkRepository>();
 builder.Services.AddSingleton<IFakeUserGenerator, FakeUserGenerator>();
@@ -85,7 +89,7 @@ app.MapGet("/imports/users/demo-payload", (IFakeUserGenerator generator) =>
     {
         users = payload.Users.Count,
         offices = payload.Offices.Count,
-        assignments = payload.UserOffices.Count
+        assignments = payload.Users.Sum(u => u.UserOffices.Count)
     });
 });
 
