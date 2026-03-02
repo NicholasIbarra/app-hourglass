@@ -1,3 +1,4 @@
+using ModelContextProtocol.Server;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,10 @@ if (!string.IsNullOrWhiteSpace(connectionString))
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddMcpServer()
+    .WithHttpTransport()
+    .WithToolsFromAssembly();
 
 var app = builder.Build();
 
@@ -48,5 +53,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapDefaultEndpoints();
 app.UseFileServer();
+
+app.MapMcp("/mcp");
 
 app.Run();
