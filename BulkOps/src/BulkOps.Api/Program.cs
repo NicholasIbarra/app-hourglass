@@ -6,6 +6,7 @@ using BulkOps.Api.Repositories;
 using BulkOps.Api.Services;
 using Hangfire;
 using Hangfire.SqlServer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +21,7 @@ builder.Services.AddDbContext<BulkOpsDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddIdentityCore<ApplicationUser>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<BulkOpsDbContext>();
 
 builder.Services.AddScoped<IUserBulkRepository, UserBulkRepository>();
@@ -97,6 +99,22 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BulkOpsDbContext>();
     await db.Database.MigrateAsync();
+
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (var roleName in RoleCatalog.StandardRoles)
+    {
+        if (await roleManager.RoleExistsAsync(roleName))
+        {
+            continue;
+        }
+
+        var roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
+        if (!roleResult.Succeeded)
+        {
+            var errors = string.Join(", ", roleResult.Errors.Select(x => x.Description));
+            throw new InvalidOperationException($"Failed to seed role '{roleName}': {errors}");
+        }
+    }
 }
 
 app.Run();

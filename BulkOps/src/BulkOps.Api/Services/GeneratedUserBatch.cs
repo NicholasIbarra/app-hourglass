@@ -9,4 +9,8 @@ public class GeneratedUserBatch
     public required List<ApplicationUser> ApplicationUsers { get; init; }
 
     public required List<User> Users { get; init; }
+
+    public required IReadOnlyList<string> Roles { get; init; }
+
+    public required Dictionary<string, List<string>> UserRoles { get; init; }
 }

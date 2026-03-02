@@ -1,6 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
 var sql = builder.AddSqlServer("sql")
+    .WithEndpoint(port: 58398, targetPort: 1433, name: "tcp")
     .WithDataVolume()
     .WithLifetime(ContainerLifetime.Persistent);
 

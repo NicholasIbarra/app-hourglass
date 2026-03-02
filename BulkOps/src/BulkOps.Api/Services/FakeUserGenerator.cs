@@ -20,11 +20,16 @@ public class FakeUserGenerator : IFakeUserGenerator
         "Remote"
     ];
 
-    public GeneratedUserBatch Generate(int userCount)
+    public GeneratedUserBatch Generate(int userCount, int rolesPerUser = 5)
     {
         if (userCount <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(userCount), "User count must be greater than zero.");
+        }
+
+        if (rolesPerUser <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(rolesPerUser), "Roles per user must be greater than zero.");
         }
 
         var faker = new Faker();
@@ -48,6 +53,9 @@ public class FakeUserGenerator : IFakeUserGenerator
         var users = userFaker.Generate(userCount);
 
         var applicationUsers = new List<ApplicationUser>(userCount);
+        var rolePool = RoleCatalog.StandardRoles.ToList();
+        var effectiveRoleCount = Math.Min(rolesPerUser, rolePool.Count);
+        var userRoles = new Dictionary<string, List<string>>(StringComparer.Ordinal);
 
         foreach (var user in users)
         {
@@ -68,6 +76,13 @@ public class FakeUserGenerator : IFakeUserGenerator
             user.IdentityId = appUser.Id;
             applicationUsers.Add(appUser);
 
+            var assignedRoles = faker.Random
+                .Shuffle(rolePool)
+                .Take(effectiveRoleCount)
+                .ToList();
+
+            userRoles[appUser.Id] = assignedRoles;
+
             var office = faker.PickRandom(offices);
             user.UserOffices.Add(new UserOffice
             {
@@ -81,7 +96,9 @@ public class FakeUserGenerator : IFakeUserGenerator
         {
             Offices = offices,
             ApplicationUsers = applicationUsers,
-            Users = users
+            Users = users,
+            Roles = rolePool,
+            UserRoles = userRoles
         };
     }
 }
