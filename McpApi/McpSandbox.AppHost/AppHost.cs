@@ -19,6 +19,8 @@ var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
 
 server.PublishWithContainerFiles(webfrontend, "wwwroot");
 
-builder.AddProject<Projects.McpSandbox_Mcp>("mcpsandbox-mcp");
+builder.AddProject<Projects.McpSandbox_Mcp>("mcpsandbox-mcp")
+.WithReference(server)
+.WaitFor(server);
 
 builder.Build().Run();
