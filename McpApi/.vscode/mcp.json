@@ -1,7 +1,8 @@
 {
 	"servers": {
 		"internal-api": {
-			"url": "https://localhost:7342//mcp",
+			// "url": "https://localhost:7342/mcp",
+			"url": "http://localhost:5470/mcp",
 			"type": "http"
 		}
 	},

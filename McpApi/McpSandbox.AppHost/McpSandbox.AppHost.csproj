@@ -9,7 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\McpSandbox.Server\McpSandbox.Server.csproj" />
+    <ProjectReference Include="..\McpSandbox.Mcp\McpSandbox.Mcp.csproj" />
+    <ProjectReference Include="..\McpSandbox.Server\McpSandbox.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

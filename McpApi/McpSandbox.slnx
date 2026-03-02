@@ -4,5 +4,7 @@
     <Deploy />
   </Project>
   <Project Path="McpSandbox.AppHost/McpSandbox.AppHost.csproj" />
-  <Project Path="McpSandbox.Server/McpSandbox.Server.csproj" />
+  <Project Path="McpSandbox.Mcp/McpSandbox.Mcp.csproj" />
+  <Project Path="McpSandbox.Server/McpSandbox.Api.csproj" />
+  <Project Path="McpSandbox.ServiceDefaults/McpSandbox.ServiceDefaults.csproj" Id="c395735b-cd76-4940-ad3e-148b8f456000" />
 </Solution>
