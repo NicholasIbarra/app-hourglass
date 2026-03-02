@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"internal-api": {
+			"url": "https://localhost:7342//mcp",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}

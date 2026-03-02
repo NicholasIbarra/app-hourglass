@@ -70,7 +70,7 @@ public sealed class UserMcpTools
     {
         if (string.IsNullOrWhiteSpace(input.Name))
         {
-            return UserMutationResult.Error("Name is required.");
+            return UserMutationResult.Failure("Name is required.");
         }
 
         var user = new User
@@ -107,7 +107,7 @@ public sealed class UserMcpTools
     {
         if (string.IsNullOrWhiteSpace(input.Name))
         {
-            return UserMutationResult.Error("Name is required.");
+            return UserMutationResult.Failure("Name is required.");
         }
 
         var user = await dbContext.Users
@@ -116,7 +116,7 @@ public sealed class UserMcpTools
 
         if (user is null)
         {
-            return UserMutationResult.Error($"User '{id}' was not found.");
+            return UserMutationResult.Failure($"User '{id}' was not found.");
         }
 
         user.Name = input.Name.Trim();
@@ -174,7 +174,7 @@ public sealed class UserMcpTools
         var missingOfficeIds = distinctOfficeIds.Where(officeId => !foundOfficeIds.Contains(officeId)).ToList();
         if (missingOfficeIds.Count > 0)
         {
-            return UserMutationResult.Error("Some office IDs were not found.", missingOfficeIds);
+            return UserMutationResult.Failure("Some office IDs were not found.", missingOfficeIds);
         }
 
         user.Offices.Clear();
@@ -257,7 +257,7 @@ public sealed class UserMcpTools
     {
         public static UserMutationResult Success(UserDto user) => new(true, null, user, null);
 
-        public static UserMutationResult Error(string error, IReadOnlyList<Guid>? missingOfficeIds = null)
+        public static UserMutationResult Failure(string error, IReadOnlyList<Guid>? missingOfficeIds = null)
             => new(false, error, null, missingOfficeIds);
     }
 
