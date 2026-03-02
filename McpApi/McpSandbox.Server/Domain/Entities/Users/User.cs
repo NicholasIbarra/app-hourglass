@@ -1,3 +1,4 @@
+using McpSandbox.Api.Contracts.Users;
 using McpSandbox.Server.Domain.Entities.Offices;
 
 namespace McpSandbox.Server.Domain.Entities.Users;

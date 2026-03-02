@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using McpSandbox.Api.Contracts;
+using McpSandbox.Api.Contracts.Unavailabilities;
 using McpSandbox.Server.Data;
 using McpSandbox.Server.Domain.Entities.Availabilities;
 
@@ -188,39 +190,4 @@ public sealed class UnavailabilitiesController : ControllerBase
             unavailability.UpdatedAt);
     }
 
-    public sealed record CreateUnavailabilityRequest(
-        Guid UserId,
-        DateTime? StartDate,
-        DateTime? EndDate,
-        bool IsAllDay,
-        string? Reason,
-        string? Notes,
-        bool IsActive);
-
-    public sealed record UpdateUnavailabilityRequest(
-        Guid UserId,
-        DateTime? StartDate,
-        DateTime? EndDate,
-        bool IsAllDay,
-        string? Reason,
-        string? Notes,
-        bool IsActive);
-
-    public sealed record UnavailabilityDto(
-        Guid Id,
-        Guid UserId,
-        DateTime? StartDate,
-        DateTime? EndDate,
-        bool IsAllDay,
-        string? Reason,
-        string? Notes,
-        bool IsActive,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? UpdatedAt);
-
-    public sealed record PagedResult<T>(
-        int Page,
-        int PageSize,
-        int TotalCount,
-        IReadOnlyList<T> Items);
 }

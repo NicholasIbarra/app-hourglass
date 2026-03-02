@@ -3,6 +3,7 @@
     <Build />
     <Deploy />
   </Project>
+  <Project Path="McpSandbox.Api.Contracts/McpSandbox.Api.Contracts.csproj" Id="5b815a32-e815-406d-94ee-43271565d631" />
   <Project Path="McpSandbox.AppHost/McpSandbox.AppHost.csproj" />
   <Project Path="McpSandbox.Mcp/McpSandbox.Mcp.csproj" />
   <Project Path="McpSandbox.Server/McpSandbox.Api.csproj" />

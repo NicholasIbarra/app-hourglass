@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\McpSandbox.Api.Contracts\McpSandbox.Api.Contracts.csproj" />
     <ProjectReference Include="..\McpSandbox.ServiceDefaults\McpSandbox.ServiceDefaults.csproj" />
   </ItemGroup>
 

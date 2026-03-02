@@ -1,4 +1,4 @@
-namespace McpSandbox.Server.Domain.Entities.Users;
+namespace McpSandbox.Api.Contracts.Users;
 
 public enum UserType
 {

@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using McpSandbox.Api.Contracts;
+using McpSandbox.Api.Contracts.Availabilities;
 using McpSandbox.Server.Data;
 using McpSandbox.Server.Domain.Entities.Availabilities;
 using McpSandbox.Server.Domain.Entities.Availabilities.ValueObjects;
-using System.Globalization;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace McpSandbox.Server.Controllers;
 
@@ -289,99 +288,6 @@ public sealed class AvailabilitiesController : ControllerBase
         }
     }
 
-    public abstract record AvailabilityRequestBase(
-        Guid UserId,
-        DateOnly EffectiveFrom,
-        DateOnly? EffectiveTo,
-        bool IsActive,
-        DayTimeRangeDto? Sunday,
-        DayTimeRangeDto? Monday,
-        DayTimeRangeDto? Tuesday,
-        DayTimeRangeDto? Wednesday,
-        DayTimeRangeDto? Thursday,
-        DayTimeRangeDto? Friday,
-        DayTimeRangeDto? Saturday,
-        IReadOnlyList<Guid>? OfficeIds);
-
-    public sealed record CreateAvailabilityRequest(
-        Guid UserId,
-        DateOnly EffectiveFrom,
-        DateOnly? EffectiveTo,
-        bool IsActive,
-        DayTimeRangeDto? Sunday,
-        DayTimeRangeDto? Monday,
-        DayTimeRangeDto? Tuesday,
-        DayTimeRangeDto? Wednesday,
-        DayTimeRangeDto? Thursday,
-        DayTimeRangeDto? Friday,
-        DayTimeRangeDto? Saturday,
-        IReadOnlyList<Guid>? OfficeIds) : AvailabilityRequestBase(
-            UserId,
-            EffectiveFrom,
-            EffectiveTo,
-            IsActive,
-            Sunday,
-            Monday,
-            Tuesday,
-            Wednesday,
-            Thursday,
-            Friday,
-            Saturday,
-            OfficeIds);
-
-    public sealed record UpdateAvailabilityRequest(
-        Guid UserId,
-        DateOnly EffectiveFrom,
-        DateOnly? EffectiveTo,
-        bool IsActive,
-        DayTimeRangeDto? Sunday,
-        DayTimeRangeDto? Monday,
-        DayTimeRangeDto? Tuesday,
-        DayTimeRangeDto? Wednesday,
-        DayTimeRangeDto? Thursday,
-        DayTimeRangeDto? Friday,
-        DayTimeRangeDto? Saturday,
-        IReadOnlyList<Guid>? OfficeIds) : AvailabilityRequestBase(
-            UserId,
-            EffectiveFrom,
-            EffectiveTo,
-            IsActive,
-            Sunday,
-            Monday,
-            Tuesday,
-            Wednesday,
-            Thursday,
-            Friday,
-            Saturday,
-            OfficeIds);
-
-    public sealed record AvailabilityDto(
-        Guid Id,
-        Guid UserId,
-        DateOnly EffectiveFrom,
-        DateOnly? EffectiveTo,
-        bool IsActive,
-        DayTimeRangeDto? Sunday,
-        DayTimeRangeDto? Monday,
-        DayTimeRangeDto? Tuesday,
-        DayTimeRangeDto? Wednesday,
-        DayTimeRangeDto? Thursday,
-        DayTimeRangeDto? Friday,
-        DayTimeRangeDto? Saturday,
-        IReadOnlyList<Guid> OfficeIds,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? UpdatedAt);
-
-    public sealed record DayTimeRangeDto(
-        [property: JsonConverter(typeof(FlexibleTimeOnlyJsonConverter))] TimeOnly StartTime,
-        [property: JsonConverter(typeof(FlexibleTimeOnlyJsonConverter))] TimeOnly EndTime);
-
-    public sealed record PagedResult<T>(
-        int Page,
-        int PageSize,
-        int TotalCount,
-        IReadOnlyList<T> Items);
-
     private readonly record struct WeeklySchedule(
         AvailabilityDayTimeRange? Sunday,
         AvailabilityDayTimeRange? Monday,
@@ -390,38 +296,5 @@ public sealed class AvailabilitiesController : ControllerBase
         AvailabilityDayTimeRange? Thursday,
         AvailabilityDayTimeRange? Friday,
         AvailabilityDayTimeRange? Saturday);
-
-    private sealed class FlexibleTimeOnlyJsonConverter : JsonConverter<TimeOnly>
-    {
-        public override TimeOnly Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            var value = reader.GetString();
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                throw new JsonException("Time value is required.");
-            }
-
-            if (TimeOnly.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var timeOnly))
-            {
-                return timeOnly;
-            }
-
-            if (DateTimeOffset.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dateTimeOffset))
-            {
-                return TimeOnly.FromTimeSpan(dateTimeOffset.TimeOfDay);
-            }
-
-            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dateTime))
-            {
-                return TimeOnly.FromDateTime(dateTime);
-            }
-
-            throw new JsonException($"Invalid time value '{value}'.");
-        }
-
-        public override void Write(Utf8JsonWriter writer, TimeOnly value, JsonSerializerOptions options)
-        {
-            writer.WriteStringValue(value.ToString("HH:mm:ss", CultureInfo.InvariantCulture));
-        }
-    }
 }
+

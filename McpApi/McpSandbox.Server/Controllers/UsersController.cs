@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using McpSandbox.Api.Contracts;
+using McpSandbox.Api.Contracts.Users;
 using McpSandbox.Server.Data;
 using McpSandbox.Server.Domain.Entities.Offices;
 using McpSandbox.Server.Domain.Entities.Users;
@@ -196,48 +198,4 @@ public sealed class UsersController : ControllerBase
             user.Offices.Select(o => o.Id).ToList());
     }
 
-    public sealed record CreateUserRequest(
-        string Name,
-        string? Email,
-        UserType Type,
-        bool IsActive,
-        string? PhoneNumber,
-        string? TimeZone,
-        string? Locale,
-        string? AvatarUrl,
-        DateTimeOffset? LastLoginAt,
-        IReadOnlyList<Guid>? OfficeIds);
-
-    public sealed record UpdateUserRequest(
-        string Name,
-        string? Email,
-        UserType Type,
-        bool IsActive,
-        string? PhoneNumber,
-        string? TimeZone,
-        string? Locale,
-        string? AvatarUrl,
-        DateTimeOffset? LastLoginAt,
-        IReadOnlyList<Guid>? OfficeIds);
-
-    public sealed record UserDto(
-        Guid Id,
-        string Name,
-        string? Email,
-        UserType Type,
-        bool IsActive,
-        string? PhoneNumber,
-        string? TimeZone,
-        string? Locale,
-        string? AvatarUrl,
-        DateTimeOffset? LastLoginAt,
-        DateTimeOffset CreatedAt,
-        DateTimeOffset? UpdatedAt,
-        IReadOnlyList<Guid> OfficeIds);
-
-    public sealed record PagedResult<T>(
-        int Page,
-        int PageSize,
-        int TotalCount,
-        IReadOnlyList<T> Items);
 }
