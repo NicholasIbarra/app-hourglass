@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using McpSandbox.Api.Contracts;
@@ -125,7 +126,9 @@ public sealed class UsersController : ControllerBase
             return BadRequest("Name is required.");
         }
 
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+        var user = await _dbContext.Users
+            .Include(u => u.Offices)
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
         if (user is null)
         {
             return NotFound();
@@ -165,6 +168,83 @@ public sealed class UsersController : ControllerBase
         return Ok(ToDto(user));
     }
 
+    [HttpPatch("{id:guid}")]
+    public async Task<ActionResult<UserDto>> Patch(Guid id, [FromBody] JsonPatchDocument<PatchUserRequest> patchDoc, CancellationToken cancellationToken)
+    {
+        var user = await _dbContext.Users
+            .AsNoTracking()
+            .Include(u => u.Offices)
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        var patchModel = new PatchUserRequest
+        {
+            Name = user.Name,
+            Email = user.Email,
+            Type = user.Type,
+            IsActive = user.IsActive,
+            PhoneNumber = user.PhoneNumber,
+            TimeZone = user.TimeZone,
+            Locale = user.Locale,
+            AvatarUrl = user.AvatarUrl,
+            LastLoginAt = user.LastLoginAt,
+            OfficeIds = user.Offices.Select(o => o.Id).ToList()
+        };
+
+        patchDoc.ApplyTo(patchModel, ModelState);
+
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        if (string.IsNullOrWhiteSpace(patchModel.Name))
+        {
+            return BadRequest("Name is required.");
+        }
+
+        var trackedUser = await _dbContext.Users
+            .Include(u => u.Offices)
+            .FirstAsync(u => u.Id == id, cancellationToken);
+
+        trackedUser.Name = patchModel.Name.Trim();
+        trackedUser.Email = patchModel.Email;
+        trackedUser.Type = patchModel.Type ?? trackedUser.Type;
+        trackedUser.IsActive = patchModel.IsActive ?? trackedUser.IsActive;
+        trackedUser.PhoneNumber = patchModel.PhoneNumber;
+        trackedUser.TimeZone = patchModel.TimeZone;
+        trackedUser.Locale = patchModel.Locale;
+        trackedUser.AvatarUrl = patchModel.AvatarUrl;
+        trackedUser.LastLoginAt = patchModel.LastLoginAt;
+        trackedUser.UpdatedAt = DateTimeOffset.UtcNow;
+
+        var officeIds = patchModel.OfficeIds?.Distinct().ToList() ?? [];
+        var offices = await _dbContext.Offices
+            .Where(o => officeIds.Contains(o.Id))
+            .ToListAsync(cancellationToken);
+
+        var foundOfficeIds = offices.Select(o => o.Id).ToHashSet();
+        var missingOfficeIds = officeIds.Where(oid => !foundOfficeIds.Contains(oid)).ToList();
+        if (missingOfficeIds.Count > 0)
+        {
+            return BadRequest(new { Message = "Some office IDs were not found.", OfficeIds = missingOfficeIds });
+        }
+
+        trackedUser.Offices.Clear();
+        foreach (var office in offices)
+        {
+            trackedUser.Offices.Add(office);
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return Ok(ToDto(trackedUser));
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -195,7 +275,7 @@ public sealed class UsersController : ControllerBase
             user.LastLoginAt,
             user.CreatedAt,
             user.UpdatedAt,
-            user.Offices.Select(o => o.Id).ToList());
+            user.Offices.Select(o => new UserOfficeDto(o.Id, o.Name)).ToList());
     }
 
 }

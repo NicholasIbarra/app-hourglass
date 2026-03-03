@@ -8,6 +8,7 @@ builder.AddServiceDefaults();
 
 // Add services to the container.
 builder.Services.AddProblemDetails();
+builder.Services.AddControllers().AddNewtonsoftJson();
 
 var connectionString = builder.Configuration.GetConnectionString("mcpdb")
     ?? builder.Configuration.GetConnectionString("McpSandbox")

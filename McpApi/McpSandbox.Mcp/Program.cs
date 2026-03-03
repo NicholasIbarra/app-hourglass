@@ -11,12 +11,29 @@ builder.Services.AddProblemDetails();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+var baseRefitSettings = new RefitSettings
+{
+    ContentSerializer = new NewtonsoftJsonContentSerializer()
+};
+
 builder.Services
-    .AddRefitClient<IUsersApi>()
+    .AddRefitClient<IUsersApi>(baseRefitSettings)
     .ConfigureHttpClient(c => c.BaseAddress = new Uri("https+http://server"));
 
 builder.Services
-    .AddRefitClient<IOfficesApi>()
+    .AddRefitClient<IOfficesApi>(baseRefitSettings)
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri("https+http://server"));
+
+builder.Services
+    .AddRefitClient<IAvailabilitiesApi>(baseRefitSettings)
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri("https+http://server"));
+
+builder.Services
+    .AddRefitClient<IUnavailabilitiesApi>(baseRefitSettings)
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri("https+http://server"));
+
+builder.Services
+    .AddRefitClient<IScheduleApi>(baseRefitSettings)
     .ConfigureHttpClient(c => c.BaseAddress = new Uri("https+http://server"));
 
 builder.Services.AddMcpServer()

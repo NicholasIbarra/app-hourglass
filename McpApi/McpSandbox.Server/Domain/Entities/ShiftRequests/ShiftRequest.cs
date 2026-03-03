@@ -1,3 +1,4 @@
+using McpSandbox.Api.Contracts.Schedule;
 using McpSandbox.Server.Domain.Entities.Offices;
 using McpSandbox.Server.Domain.Entities.Users;
 
