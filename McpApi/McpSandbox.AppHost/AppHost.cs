@@ -6,6 +6,7 @@ var sql = builder.AddSqlServer("mssql")
     .PublishAsContainer();
 
 var mcpdb = sql.AddDatabase("mcpdb");
+var chatdb = sql.AddDatabase("chatdb");
 
 var server = builder.AddProject<Projects.McpSandbox_Api>("server")
     .WithReference(mcpdb)
@@ -19,8 +20,14 @@ var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
 
 server.PublishWithContainerFiles(webfrontend, "wwwroot");
 
-builder.AddProject<Projects.McpSandbox_Mcp>("mcpsandbox-mcp")
-.WithReference(server)
-.WaitFor(server);
+var mcp = builder.AddProject<Projects.McpSandbox_Mcp>("mcpsandbox-mcp")
+    .WithReference(server)
+    .WaitFor(server)
+    .WithReference(chatdb)
+    .WaitFor(chatdb);
+
+webfrontend
+    .WithReference(mcp)
+    .WaitFor(mcp);
 
 builder.Build().Run();
