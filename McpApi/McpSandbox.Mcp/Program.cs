@@ -47,6 +47,7 @@ builder.Services.AddSingleton(sp =>
 });
 
 builder.Services.AddScoped<IChatAgentService, ChatAgentService>();
+builder.Services.AddScoped<IMcpToolClient, McpToolClient>();
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>

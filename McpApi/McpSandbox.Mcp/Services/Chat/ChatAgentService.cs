@@ -1,4 +1,3 @@
-using System.ClientModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -13,12 +12,18 @@ public sealed class ChatAgentService : IChatAgentService
 {
     private readonly ChatDbContext _db;
     private readonly ChatClient _chatClient;
+    private readonly IMcpToolClient _mcpToolClient;
     private readonly ILogger<ChatAgentService> _logger;
 
-    public ChatAgentService(ChatDbContext db, ChatClient chatClient, ILogger<ChatAgentService> logger)
+    public ChatAgentService(
+        ChatDbContext db,
+        ChatClient chatClient,
+        IMcpToolClient mcpToolClient,
+        ILogger<ChatAgentService> logger)
     {
         _db = db;
         _chatClient = chatClient;
+        _mcpToolClient = mcpToolClient;
         _logger = logger;
     }
 
@@ -60,21 +65,62 @@ public sealed class ChatAgentService : IChatAgentService
 
         messages.Add(ChatMessage.CreateUserMessage(userMessage));
 
+        var completionOptions = new ChatCompletionOptions();
+        foreach (var tool in _mcpToolClient.GetToolDefinitions())
+            completionOptions.Tools.Add(tool);
+
         var fullResponse = new StringBuilder();
 
-        AsyncCollectionResult<StreamingChatCompletionUpdate> stream =
-            _chatClient.CompleteChatStreamingAsync(messages, cancellationToken: cancellationToken);
-
-        await foreach (var update in stream)
+        for (var iteration = 0; iteration < 8; iteration++)
         {
-            foreach (var part in update.ContentUpdate)
+            var completion = await _chatClient.CompleteChatAsync(messages, completionOptions, cancellationToken);
+            var update = completion.Value;
+
+            if (update.ToolCalls.Count > 0)
             {
-                if (!string.IsNullOrEmpty(part.Text))
+                messages.Add(ChatMessage.CreateAssistantMessage(string.Join('\n', update.ToolCalls.Select(tc =>
+                    $"Calling tool {tc.FunctionName} with args: {tc.FunctionArguments}"))));
+
+                foreach (var toolCall in update.ToolCalls)
                 {
-                    fullResponse.Append(part.Text);
-                    yield return part.Text;
+                    try
+                    {
+                        var toolResult = await _mcpToolClient.InvokeAsync(
+                            toolCall.FunctionName,
+                            toolCall.FunctionArguments.ToString(),
+                            cancellationToken);
+
+                        messages.Add(ChatMessage.CreateUserMessage(
+                            $"Tool '{toolCall.FunctionName}' returned:\n{toolResult}"));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "MCP tool {ToolName} failed.", toolCall.FunctionName);
+                        messages.Add(ChatMessage.CreateUserMessage(
+                            $"Tool '{toolCall.FunctionName}' failed: {ex.Message}"));
+                    }
                 }
+
+                continue;
             }
+
+            foreach (var part in update.Content)
+            {
+                if (string.IsNullOrEmpty(part.Text))
+                    continue;
+
+                fullResponse.Append(part.Text);
+                yield return part.Text;
+            }
+
+            break;
+        }
+
+        if (fullResponse.Length == 0)
+        {
+            const string fallbackMessage = "I couldn't produce a response. Please try again with a bit more detail.";
+            fullResponse.Append(fallbackMessage);
+            yield return fallbackMessage;
         }
 
         var assistantMsg = new ConversationMessage
