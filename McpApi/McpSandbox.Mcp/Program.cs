@@ -30,6 +30,8 @@ if (!string.IsNullOrWhiteSpace(chatConnectionString))
 // Azure OpenAI
 builder.Services.Configure<AzureOpenAIOptions>(
     builder.Configuration.GetSection(AzureOpenAIOptions.SectionName));
+builder.Services.Configure<ChatAgentOptions>(
+    builder.Configuration.GetSection(ChatAgentOptions.SectionName));
 
 builder.Services.AddSingleton(sp =>
 {

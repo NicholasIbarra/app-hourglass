@@ -146,15 +146,16 @@ public sealed class McpToolClient : IMcpToolClient
         {
             foreach (var method in toolType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
             {
-                var toolAttribute = method.GetCustomAttribute<McpServerToolAttribute>();
-                if (toolAttribute is null)
+                if (method.IsSpecialName)
                     continue;
 
-                var name = string.IsNullOrWhiteSpace(toolAttribute.Name)
+                var toolAttribute = method.GetCustomAttribute<McpServerToolAttribute>(inherit: true);
+
+                var name = string.IsNullOrWhiteSpace(toolAttribute?.Name)
                     ? method.Name
                     : toolAttribute.Name;
 
-                var description = method.GetCustomAttribute<DescriptionAttribute>()?.Description
+                var description = method.GetCustomAttribute<DescriptionAttribute>(inherit: true)?.Description
                     ?? $"Invokes {name}.";
 
                 yield return new ToolRegistration(

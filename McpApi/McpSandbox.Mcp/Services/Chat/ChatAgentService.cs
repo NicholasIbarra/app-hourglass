@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using McpSandbox.Api.Contracts.Chat;
 using McpSandbox.Mcp.Data;
 using McpSandbox.Mcp.Domain.Entities;
+using Microsoft.Extensions.Options;
 using OpenAI.Chat;
 
 namespace McpSandbox.Mcp.Services.Chat;
@@ -14,16 +15,19 @@ public sealed class ChatAgentService : IChatAgentService
     private readonly ChatClient _chatClient;
     private readonly IMcpToolClient _mcpToolClient;
     private readonly ILogger<ChatAgentService> _logger;
+    private readonly ChatAgentOptions _options;
 
     public ChatAgentService(
         ChatDbContext db,
         ChatClient chatClient,
         IMcpToolClient mcpToolClient,
+        IOptions<ChatAgentOptions> options,
         ILogger<ChatAgentService> logger)
     {
         _db = db;
         _chatClient = chatClient;
         _mcpToolClient = mcpToolClient;
+        _options = options.Value;
         _logger = logger;
     }
 
@@ -71,7 +75,9 @@ public sealed class ChatAgentService : IChatAgentService
 
         var fullResponse = new StringBuilder();
 
-        for (var iteration = 0; iteration < 8; iteration++)
+        var maxIterations = Math.Clamp(_options.MaxToolIterations, 1, 32);
+
+        for (var iteration = 0; iteration < maxIterations; iteration++)
         {
             var completion = await _chatClient.CompleteChatAsync(messages, completionOptions, cancellationToken);
             var update = completion.Value;
