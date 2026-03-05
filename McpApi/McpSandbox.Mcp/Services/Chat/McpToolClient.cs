@@ -48,11 +48,22 @@ public sealed class McpToolClient : IMcpToolClient
 
     private static object?[] BuildInvocationArguments(MethodInfo method, JsonDocument? argsDoc, CancellationToken cancellationToken)
     {
-        var args = new object?[method.GetParameters().Length];
+        var parameters = method.GetParameters();
+        var args = new object?[parameters.Length];
 
-        for (var i = 0; i < method.GetParameters().Length; i++)
+        var singleComplexParameter = parameters
+            .Where(p => p.ParameterType != typeof(CancellationToken))
+            .ToArray();
+
+        var canUseRootObjectForSingleComplexParameter =
+            argsDoc is not null &&
+            argsDoc.RootElement.ValueKind == JsonValueKind.Object &&
+            singleComplexParameter.Length == 1 &&
+            IsComplexType(singleComplexParameter[0].ParameterType);
+
+        for (var i = 0; i < parameters.Length; i++)
         {
-            var parameter = method.GetParameters()[i];
+            var parameter = parameters[i];
 
             if (parameter.ParameterType == typeof(CancellationToken))
             {
@@ -68,19 +79,22 @@ public sealed class McpToolClient : IMcpToolClient
                 continue;
             }
 
+            if (canUseRootObjectForSingleComplexParameter)
+            {
+                args[i] = argsDoc!.RootElement.Deserialize(parameter.ParameterType, JsonOptions);
+                continue;
+            }
+
             if (parameter.HasDefaultValue)
             {
                 args[i] = parameter.DefaultValue;
                 continue;
             }
 
-            if (!parameter.ParameterType.IsValueType || Nullable.GetUnderlyingType(parameter.ParameterType) is not null)
-            {
-                args[i] = null;
-                continue;
-            }
+            if (IsRequiredParameter(parameter))
+                throw new ArgumentException($"Missing required argument '{parameter.Name}'.");
 
-            throw new ArgumentException($"Missing required argument '{parameter.Name}'.");
+            args[i] = null;
         }
 
         return args;
@@ -99,6 +113,32 @@ public sealed class McpToolClient : IMcpToolClient
 
         value = default;
         return false;
+    }
+
+    private static bool IsComplexType(Type type)
+    {
+        var unwrapped = Nullable.GetUnderlyingType(type) ?? type;
+        if (unwrapped == typeof(string))
+            return false;
+
+        if (unwrapped.IsPrimitive || unwrapped.IsEnum)
+            return false;
+
+        return true;
+    }
+
+    private static bool IsRequiredParameter(ParameterInfo parameter)
+    {
+        if (parameter.HasDefaultValue)
+            return false;
+
+        var type = parameter.ParameterType;
+
+        if (type.IsValueType)
+            return Nullable.GetUnderlyingType(type) is null;
+
+        var nullability = new NullabilityInfoContext().Create(parameter);
+        return nullability.WriteState == NullabilityState.NotNull;
     }
 
     private static async Task<string> SerializeResultAsync(object? result, CancellationToken cancellationToken)
@@ -188,9 +228,7 @@ public sealed class McpToolClient : IMcpToolClient
 
             properties[parameter.Name!] = schema;
 
-            if (!parameter.HasDefaultValue &&
-                parameter.ParameterType.IsValueType &&
-                Nullable.GetUnderlyingType(parameter.ParameterType) is null)
+            if (IsRequiredParameter(parameter))
             {
                 required.Add(parameter.Name!);
             }
