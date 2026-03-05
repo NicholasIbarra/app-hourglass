@@ -39,7 +39,7 @@ builder.Services.AddSingleton(sp =>
         new ApiKeyCredential(opts.ApiKey));
 });
 
-builder.Services.AddSingleton<IChatClient>(sp =>
+builder.Services.AddSingleton(sp =>
 {
     var client = sp.GetRequiredService<AzureOpenAIClient>();
     var opts = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>().Value;
