@@ -30,6 +30,8 @@ if (!string.IsNullOrWhiteSpace(chatConnectionString))
 // Azure OpenAI
 builder.Services.Configure<AzureOpenAIOptions>(
     builder.Configuration.GetSection(AzureOpenAIOptions.SectionName));
+builder.Services.Configure<ChatAgentOptions>(
+    builder.Configuration.GetSection(ChatAgentOptions.SectionName));
 
 builder.Services.AddSingleton(sp =>
 {
@@ -47,6 +49,7 @@ builder.Services.AddSingleton(sp =>
 });
 
 builder.Services.AddScoped<IChatAgentService, ChatAgentService>();
+builder.Services.AddScoped<IMcpToolClient, McpToolClient>();
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
