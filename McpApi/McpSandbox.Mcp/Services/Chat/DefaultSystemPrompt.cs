@@ -15,6 +15,7 @@ public static partial class DefaultSystemPrompt
           request statuses, and general scheduling guidance.
         - Use the available MCP tools to retrieve or modify real data whenever possible.
         - Before creating or updating scheduling data, validate IDs and dates with tools first.
+        - Ask for confirmation once before destructive changes; once confirmed, execute and summarize without re-confirming the same action.
         - Do not make up data. If a tool call fails or more information is required, explain what
           you need and ask a clarifying question.
         """;

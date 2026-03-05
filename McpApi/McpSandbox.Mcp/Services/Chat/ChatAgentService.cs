@@ -74,6 +74,7 @@ public sealed class ChatAgentService : IChatAgentService
             completionOptions.Tools.Add(tool);
 
         var fullResponse = new StringBuilder();
+        var invokedSignatures = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         var maxIterations = Math.Clamp(_options.MaxToolIterations, 1, 32);
 
@@ -84,11 +85,22 @@ public sealed class ChatAgentService : IChatAgentService
 
             if (update.ToolCalls.Count > 0)
             {
-                messages.Add(ChatMessage.CreateAssistantMessage(string.Join('\n', update.ToolCalls.Select(tc =>
-                    $"Calling tool {tc.FunctionName} with args: {tc.FunctionArguments}"))));
-
                 foreach (var toolCall in update.ToolCalls)
                 {
+                    var signature = $"{toolCall.FunctionName}:{toolCall.FunctionArguments}";
+                    if (!invokedSignatures.Add(signature))
+                    {
+                        _logger.LogWarning(
+                            "Detected repeated tool call loop for {ToolName}. Breaking loop to avoid repeated confirmations.",
+                            toolCall.FunctionName);
+
+                        var loopMessage = "I’m pausing because I’m repeating the same action request. " +
+                                          "Please provide any missing details (for example an office id, date range, or exact action) and I’ll proceed.";
+                        fullResponse.Append(loopMessage);
+                        yield return loopMessage;
+                        break;
+                    }
+
                     try
                     {
                         var toolResult = await _mcpToolClient.InvokeAsync(
@@ -96,16 +108,20 @@ public sealed class ChatAgentService : IChatAgentService
                             toolCall.FunctionArguments.ToString(),
                             cancellationToken);
 
-                        messages.Add(ChatMessage.CreateUserMessage(
-                            $"Tool '{toolCall.FunctionName}' returned:\n{toolResult}"));
+                        messages.Add(ChatMessage.CreateSystemMessage(
+                            $"Tool '{toolCall.FunctionName}' executed successfully. Result: {toolResult}. " +
+                            "If the user already confirmed this action, do not ask for confirmation again; continue with the next step or summarize the completed action."));
                     }
                     catch (Exception ex)
                     {
                         _logger.LogWarning(ex, "MCP tool {ToolName} failed.", toolCall.FunctionName);
-                        messages.Add(ChatMessage.CreateUserMessage(
-                            $"Tool '{toolCall.FunctionName}' failed: {ex.Message}"));
+                        messages.Add(ChatMessage.CreateSystemMessage(
+                            $"Tool '{toolCall.FunctionName}' failed: {ex.Message}. Ask a concise follow-up question only if needed to proceed."));
                     }
                 }
+
+                if (fullResponse.Length > 0)
+                    break;
 
                 continue;
             }
