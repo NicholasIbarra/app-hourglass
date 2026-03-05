@@ -1,24 +1,29 @@
-using System.ClientModel;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using McpSandbox.Api.Contracts.Chat;
 using McpSandbox.Mcp.Data;
 using McpSandbox.Mcp.Domain.Entities;
-using OpenAI.Chat;
 
 namespace McpSandbox.Mcp.Services.Chat;
 
 public sealed class ChatAgentService : IChatAgentService
 {
     private readonly ChatDbContext _db;
-    private readonly ChatClient _chatClient;
+    private readonly IChatClient _chatClient;
+    private readonly IMcpToolProvider _toolProvider;
     private readonly ILogger<ChatAgentService> _logger;
 
-    public ChatAgentService(ChatDbContext db, ChatClient chatClient, ILogger<ChatAgentService> logger)
+    public ChatAgentService(
+        ChatDbContext db,
+        IChatClient chatClient,
+        IMcpToolProvider toolProvider,
+        ILogger<ChatAgentService> logger)
     {
         _db = db;
         _chatClient = chatClient;
+        _toolProvider = toolProvider;
         _logger = logger;
     }
 
@@ -45,35 +50,38 @@ public sealed class ChatAgentService : IChatAgentService
         await _db.SaveChangesAsync(cancellationToken);
 
         var messages = new List<ChatMessage>();
-        messages.Add(ChatMessage.CreateSystemMessage(systemPrompt));
+        messages.Add(new ChatMessage(ChatRole.System, systemPrompt));
 
         foreach (var msg in conversation.Messages)
         {
-            messages.Add(msg.Role switch
+            var role = msg.Role switch
             {
-                MessageRole.System => ChatMessage.CreateSystemMessage(msg.Content),
-                MessageRole.User => ChatMessage.CreateUserMessage(msg.Content),
-                MessageRole.Assistant => ChatMessage.CreateAssistantMessage(msg.Content),
-                _ => ChatMessage.CreateUserMessage(msg.Content)
-            });
+                MessageRole.System => ChatRole.System,
+                MessageRole.User => ChatRole.User,
+                MessageRole.Assistant => ChatRole.Assistant,
+                _ => ChatRole.User
+            };
+            messages.Add(new ChatMessage(role, msg.Content));
         }
 
-        messages.Add(ChatMessage.CreateUserMessage(userMessage));
+        messages.Add(new ChatMessage(ChatRole.User, userMessage));
+
+        var tools = await _toolProvider.GetToolsAsync(cancellationToken);
+        var chatOptions = new ChatOptions();
+        if (tools.Count > 0)
+        {
+            chatOptions.Tools = [.. tools];
+        }
 
         var fullResponse = new StringBuilder();
 
-        AsyncCollectionResult<StreamingChatCompletionUpdate> stream =
-            _chatClient.CompleteChatStreamingAsync(messages, cancellationToken: cancellationToken);
-
-        await foreach (var update in stream)
+        await foreach (var update in _chatClient.GetStreamingResponseAsync(
+            messages, chatOptions, cancellationToken))
         {
-            foreach (var part in update.ContentUpdate)
+            if (!string.IsNullOrEmpty(update.Text))
             {
-                if (!string.IsNullOrEmpty(part.Text))
-                {
-                    fullResponse.Append(part.Text);
-                    yield return part.Text;
-                }
+                fullResponse.Append(update.Text);
+                yield return update.Text;
             }
         }
 

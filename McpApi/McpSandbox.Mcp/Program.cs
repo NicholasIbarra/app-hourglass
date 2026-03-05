@@ -4,8 +4,8 @@ using McpSandbox.Mcp.Api;
 using McpSandbox.Mcp.Data;
 using McpSandbox.Mcp.Services.Chat;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
-using OpenAI.Chat;
 using Refit;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,12 +39,18 @@ builder.Services.AddSingleton(sp =>
         new ApiKeyCredential(opts.ApiKey));
 });
 
-builder.Services.AddSingleton(sp =>
+builder.Services.AddSingleton<IChatClient>(sp =>
 {
     var client = sp.GetRequiredService<AzureOpenAIClient>();
     var opts = sp.GetRequiredService<IOptions<AzureOpenAIOptions>>().Value;
-    return client.GetChatClient(opts.Model);
+    return client.GetChatClient(opts.Model)
+        .AsIChatClient()
+        .AsBuilder()
+        .UseFunctionInvocation()
+        .Build();
 });
+
+builder.Services.AddSingleton<IMcpToolProvider, McpToolProvider>();
 
 builder.Services.AddScoped<IChatAgentService, ChatAgentService>();
 

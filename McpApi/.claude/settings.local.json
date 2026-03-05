@@ -4,7 +4,13 @@
       "Bash(cd /c/Projects/app-hourglass/McpApi && dotnet restore McpSandbox.Mcp/McpSandbox.Mcp.csproj 2>&1)",
       "Bash(cd /c/Projects/app-hourglass/McpApi && dotnet build 2>&1)",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(xargs grep:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.nuget.org)",
+      "Bash(dotnet build:*)",
+      "Bash(grep:*)"
     ]
   }
 }
