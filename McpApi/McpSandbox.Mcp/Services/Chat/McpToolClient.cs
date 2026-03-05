@@ -1,3 +1,4 @@
+using System.Collections;
 using System.ComponentModel;
 using System.Reflection;
 using System.Text.Json;
@@ -9,6 +10,8 @@ namespace McpSandbox.Mcp.Services.Chat;
 
 public sealed class McpToolClient : IMcpToolClient
 {
+    private const int MaxSchemaDepth = 3;
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNameCaseInsensitive = true
@@ -51,15 +54,15 @@ public sealed class McpToolClient : IMcpToolClient
         var parameters = method.GetParameters();
         var args = new object?[parameters.Length];
 
-        var singleComplexParameter = parameters
+        var singleToolParameter = parameters
             .Where(p => p.ParameterType != typeof(CancellationToken))
             .ToArray();
 
         var canUseRootObjectForSingleComplexParameter =
             argsDoc is not null &&
             argsDoc.RootElement.ValueKind == JsonValueKind.Object &&
-            singleComplexParameter.Length == 1 &&
-            IsComplexType(singleComplexParameter[0].ParameterType);
+            singleToolParameter.Length == 1 &&
+            IsComplexType(singleToolParameter[0].ParameterType);
 
         for (var i = 0; i < parameters.Length; i++)
         {
@@ -217,10 +220,7 @@ public sealed class McpToolClient : IMcpToolClient
             if (parameter.ParameterType == typeof(CancellationToken))
                 continue;
 
-            var schema = new Dictionary<string, object?>
-            {
-                ["type"] = GetJsonType(parameter.ParameterType)
-            };
+            var schema = BuildTypeSchema(parameter.ParameterType, 0);
 
             var description = parameter.GetCustomAttribute<DescriptionAttribute>()?.Description;
             if (!string.IsNullOrWhiteSpace(description))
@@ -229,9 +229,7 @@ public sealed class McpToolClient : IMcpToolClient
             properties[parameter.Name!] = schema;
 
             if (IsRequiredParameter(parameter))
-            {
                 required.Add(parameter.Name!);
-            }
         }
 
         var payload = new Dictionary<string, object?>
@@ -245,17 +243,138 @@ public sealed class McpToolClient : IMcpToolClient
         return BinaryData.FromObjectAsJson(payload, JsonOptions);
     }
 
-    private static string GetJsonType(Type parameterType)
+    private static Dictionary<string, object?> BuildTypeSchema(Type type, int depth)
     {
-        var type = Nullable.GetUnderlyingType(parameterType) ?? parameterType;
+        var unwrapped = Nullable.GetUnderlyingType(type) ?? type;
 
-        if (type == typeof(bool)) return "boolean";
-        if (type == typeof(int) || type == typeof(long) || type == typeof(short)) return "integer";
-        if (type == typeof(float) || type == typeof(double) || type == typeof(decimal)) return "number";
-        if (type == typeof(string) || type == typeof(Guid) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(DateOnly)) return "string";
-        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string)) return "array";
+        if (TryGetPrimitiveJsonType(unwrapped, out var primitiveType))
+            return new Dictionary<string, object?> { ["type"] = primitiveType };
 
-        return "object";
+        if (TryGetEnumerableElementType(unwrapped, out var elementType))
+        {
+            return new Dictionary<string, object?>
+            {
+                ["type"] = "array",
+                ["items"] = BuildTypeSchema(elementType, depth + 1)
+            };
+        }
+
+        if (depth >= MaxSchemaDepth)
+            return new Dictionary<string, object?> { ["type"] = "object" };
+
+        var objectProperties = new Dictionary<string, object?>();
+        var objectRequired = new List<string>();
+
+        var nullabilityContext = new NullabilityInfoContext();
+        foreach (var property in unwrapped.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (!property.CanRead)
+                continue;
+
+            var propertySchema = BuildTypeSchema(property.PropertyType, depth + 1);
+            var description = property.GetCustomAttribute<DescriptionAttribute>()?.Description;
+            if (!string.IsNullOrWhiteSpace(description))
+                propertySchema["description"] = description;
+
+            objectProperties[property.Name] = propertySchema;
+
+            var nullabilityInfo = nullabilityContext.Create(property);
+            var isNullableRef = !property.PropertyType.IsValueType && nullabilityInfo.ReadState != NullabilityState.NotNull;
+            var isNullableValueType = Nullable.GetUnderlyingType(property.PropertyType) is not null;
+            if (!isNullableRef && !isNullableValueType)
+                objectRequired.Add(property.Name);
+        }
+
+        return new Dictionary<string, object?>
+        {
+            ["type"] = "object",
+            ["properties"] = objectProperties,
+            ["required"] = objectRequired,
+            ["additionalProperties"] = false
+        };
+    }
+
+    private static bool TryGetPrimitiveJsonType(Type type, out string jsonType)
+    {
+        if (type == typeof(bool))
+        {
+            jsonType = "boolean";
+            return true;
+        }
+
+        if (type == typeof(int) || type == typeof(long) || type == typeof(short))
+        {
+            jsonType = "integer";
+            return true;
+        }
+
+        if (type == typeof(float) || type == typeof(double) || type == typeof(decimal))
+        {
+            jsonType = "number";
+            return true;
+        }
+
+        if (type == typeof(string) || type == typeof(Guid) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(DateOnly))
+        {
+            jsonType = "string";
+            return true;
+        }
+
+        if (type.IsEnum)
+        {
+            jsonType = "string";
+            return true;
+        }
+
+        jsonType = string.Empty;
+        return false;
+    }
+
+    private static bool TryGetEnumerableElementType(Type type, out Type elementType)
+    {
+        if (type == typeof(string))
+        {
+            elementType = typeof(object);
+            return false;
+        }
+
+        if (type.IsArray)
+        {
+            elementType = type.GetElementType()!;
+            return true;
+        }
+
+        if (type.IsGenericType)
+        {
+            var generic = type.GetGenericTypeDefinition();
+            if (generic == typeof(IEnumerable<>) ||
+                generic == typeof(ICollection<>) ||
+                generic == typeof(IList<>) ||
+                generic == typeof(List<>) ||
+                generic == typeof(IReadOnlyList<>))
+            {
+                elementType = type.GetGenericArguments()[0];
+                return true;
+            }
+        }
+
+        var enumerableInterface = type.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+
+        if (enumerableInterface is not null)
+        {
+            elementType = enumerableInterface.GetGenericArguments()[0];
+            return true;
+        }
+
+        if (typeof(IEnumerable).IsAssignableFrom(type))
+        {
+            elementType = typeof(object);
+            return true;
+        }
+
+        elementType = typeof(object);
+        return false;
     }
 
     private sealed record ToolRegistration(
