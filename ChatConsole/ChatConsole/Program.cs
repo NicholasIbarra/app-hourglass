@@ -1,10 +1,10 @@
-﻿
-using Azure.AI.OpenAI;
+﻿using Azure.AI.OpenAI;
 using ChatConsole;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenAI.Chat;
 
 var host = Host.CreateApplicationBuilder(args);
 
@@ -22,13 +22,28 @@ var client = new AzureOpenAIClient(new Uri(endpoint), new Azure.AzureKeyCredenti
 string model = "gpt-5-chat";
 IChatClient chatClient = client.GetChatClient(model).AsIChatClient();
 
+var tool = ChatTool.CreateFunctionTool(
+    functionName: "mcp_call",
+    functionDescription: "Calls the MCP server to execute a domain operation.",
+    functionParameters: BinaryData.FromObjectAsJson(new
+    {
+        type = "object",
+        properties = new
+        {
+            method = new { type = "string" },
+            parameters = new { type = "object" }
+        },
+        required = new[] { "method", "parameters" }
+    })
+);
+
 host.Services.AddChatClient(chatClient);
 host.Services.AddHttpClient();
 
 //host.Services.AddHostedService<ChatApp>();
-host.Services.AddHostedService<WebChatApp>();
+host.Services.AddHostedService<EmbedAgent>();
 
 
 var app = host.Build();
 
-app.Run();
+app.Run();app.Run();
